@@ -48,4 +48,6 @@ with open(dates_file, 'w') as fp:
     strParameters = '\n'.join(map(str, parameters))    
     p = subprocess.Popen('./geradata', stdin=subprocess.PIPE, stdout=fp) 
     p.communicate(strParameters)
+
+    os.unlink(leap_sec)
     exit(0)

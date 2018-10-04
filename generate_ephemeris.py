@@ -7,6 +7,8 @@ parser.add_argument("bsp_planets", help="")
 parser.add_argument("filename", help="")
 parser.add_argument("--leap_sec", default="naif0012.tls", help="")
 parser.add_argument("--radec_filename", default="radec.txt", help="")
+parser.add_argument("--positions_filename", default="positions.txt", help="")
+
 
 args = parser.parse_args()
 
@@ -113,6 +115,17 @@ def generateEphemeris(datesFile, bsp, dexxx, leapSec, nameFile, radec):
 
 
 
+def generatePositions(ephemeris, positions):
+
+    eph = os.path.basename(ephemeris)
+    if os.path.exists(ephemeris):
+        os.symlink(ephemeris, eph)
+
+    with open(positions, 'w') as fp:
+        p = subprocess.Popen(['./gerapositions', eph], stdin=subprocess.PIPE, stdout=fp ) 
+        p.communicate()
+
+    os.unlink(eph)
 
 # ============ Generating ephemeris =============
 
@@ -126,6 +139,7 @@ result_filename = args.filename
 
 data_dir = os.environ.get("DIR_DATA")
 radec_filename = args.radec_filename
+positions_filename = args.positions_filename
 
 in_dates_file = os.path.join(data_dir, dates_file)
 in_bsp_object = os.path.join(data_dir, bsp_object)
@@ -134,6 +148,7 @@ in_leap_sec = os.path.join(data_dir, leap_sec)
 
 ephemeris = os.path.join(data_dir, result_filename)
 radec = os.path.join(data_dir, radec_filename)
+positions = os.path.join(data_dir, positions_filename)
 
 if not os.path.exists(dates_file):
     if os.path.exists(in_dates_file):
@@ -168,10 +183,16 @@ try:
     os.unlink(bsp_planets)
     os.unlink(leap_sec)
 
-    if os.path.exists(ephemeris):
-        exit(0)
-    else:
+    if not os.path.exists(ephemeris):
         exit(1)
+
+    # Generate Positions
+    generatePositions(ephemeris, positions)
+
+    if not os.path.exists(positions):
+        exit(2)
+
+    exit(0)
 
 except Exception as e:
     raise(e)

@@ -38,7 +38,7 @@ WORKDIR $APP_PATH
 
 COPY . $APP_PATH
 
-RUN ls -ltr && pwd
+# RUN ls -ltr && pwd
 
 
 # RUN python pipelinePredictionOccultation.py

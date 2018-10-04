@@ -50,4 +50,8 @@ with open(dates_file, 'w') as fp:
     p.communicate(strParameters)
 
     os.unlink(leap_sec)
-    exit(0)
+
+
+os.chmod(dates_file, 0666)
+
+exit(0)

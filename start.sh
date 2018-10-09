@@ -27,4 +27,11 @@
 #     praia-occultation:latest  \
 #   python generate_ephemeris.py dates.txt 1999RB216.bsp de435.bsp 1999RB216.ephsh
 
+# Exemplo de como executar o PRAIA OCC
+docker run -it --rm \
+    --name praia_occ \
+    --volume $PWD/data:/data \
+    --volume $PWD/:/app  \
+    praia-occultation:latest  \
+    python search_candidate_stars.py /data/PRAIA_occ_star_search_12.dat
 

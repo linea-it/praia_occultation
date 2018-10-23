@@ -18,8 +18,6 @@ log = os.path.join(data_dir, log_filename)
 
 def searchCandidates(config_file, log):
 
-    print (config_file)
-
     with open(log, 'w') as fp:
         p = subprocess.Popen('./PRAIA_occ_star_search_12 < '+config_file, stdin=subprocess.PIPE, shell=True, stdout=fp )
         p.communicate()

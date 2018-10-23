@@ -14,7 +14,10 @@ RUN apt-get update && apt-get install -y \
 		libpng-dev \ 
 		libffi-dev \
 		# openssl-dev \
-		gfortran
+		gfortran \
+		unzip \
+		libgeos-3.5.1 \
+		libgeos-dev
 
 RUN pip install --upgrade pip \
 		setuptools \
@@ -25,7 +28,14 @@ RUN pip install --upgrade pip \
 		cffi \
 		numpy==1.15.1 \
 		astropy==2.0.8 \
-		spiceypy==2.1.2 
+		spiceypy==2.1.2 \
+		matplotlib==1.5.1 \
+		Pillow \
+		OWSLib \
+		Cython \
+		pyproj \
+		PyShp
+
 
 
 RUN gfortran --version
@@ -37,6 +47,23 @@ RUN mkdir $APP_PATH
 WORKDIR $APP_PATH
 
 COPY . $APP_PATH
+
+
+# RUN cd $APP_PATH/basemap \
+# 		unzip basemap-1.1.0.zip 
+
+RUN cd $APP_PATH/basemap/basemap-1.1.0 \
+		python setup.py install
+
+# 		ls
+		# export GEOS_DIR=/usr/local \
+		# ./configure --prefix=$GEOS_DIR \
+
+		# make; make install \
+		# cd $APP_PATH/basemap/basemap-1.1.0 \
+		# python setup.py install
+
+
 
 # RUN ls -ltr && pwd
 

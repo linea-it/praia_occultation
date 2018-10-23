@@ -36,9 +36,9 @@ def xy2latlon(y, z, loncen, latcen):
     
 def latlon2xy(site, center):
 #    r = 6370997.0
-    x1 = np.cos(center.latitude)*np.cos(center.longitude)*site.x.value + np.cos(center.latitude)*np.sin(center.longitude)*site.y.value + np.sin(center.latitude)*site.z.value
-    y1 = - np.sin(center.longitude)*site.x.value + np.cos(center.longitude)*site.y.value
-    z1 = - np.sin(center.latitude)*np.cos(center.longitude)*site.x.value - np.sin(center.latitude)*np.sin(center.longitude)*site.y.value + np.cos(center.latitude)*site.z.value
+    x1 = np.cos(center.lat)*np.cos(center.lon)*site.x.value + np.cos(center.lat)*np.sin(center.lon)*site.y.value + np.sin(center.lat)*site.z.value
+    y1 = - np.sin(center.lon)*site.x.value + np.cos(center.lon)*site.y.value
+    z1 = - np.sin(center.lat)*np.cos(center.lon)*site.x.value - np.sin(center.lat)*np.sin(center.lon)*site.y.value + np.cos(center.lat)*site.z.value
 #    y1 = y1*1000.0+r
 #    z1 = z1*1000.0+r
     if type(x1.value) is np.ndarray:
@@ -339,7 +339,7 @@ def geramapa(obj, diam, *args, **kwargs):
             center_map = kwargs['centermap']
         fig = plt.figure(figsize=(mapsize[0].to(u.imperial.inch).value, mapsize[1].to(u.imperial.inch).value))
         if not limits:
-            m = Basemap(projection='ortho',lat_0=center_map.latitude.value,lon_0=center_map.longitude.value,resolution=resolution)
+            m = Basemap(projection='ortho',lat_0=center_map.lat.value,lon_0=center_map.lon.value,resolution=resolution)
         elif np.array(limits).shape == (3,):
             if mapsize[1] < mapsize[0]:
                 ly = (limits[1]*u.km).to(u.m).value - r/limits[2]
@@ -351,7 +351,7 @@ def geramapa(obj, diam, *args, **kwargs):
                 ux = (limits[0]*u.km).to(u.m).value + r/limits[2]
                 ly = (limits[1]*u.km).to(u.m).value - (r/limits[2])*(mapsize[1]/mapsize[0])
                 uy = (limits[1]*u.km).to(u.m).value + (r/limits[2])*(mapsize[1]/mapsize[0])
-            m = Basemap(projection='ortho',lat_0=center_map.latitude.value,lon_0=center_map.longitude.value,resolution=resolution,llcrnrx=lx,llcrnry=ly,urcrnrx=ux,urcrnry=uy, area_thresh=2000)
+            m = Basemap(projection='ortho',lat_0=center_map.lat.value,lon_0=center_map.lon.value,resolution=resolution,llcrnrx=lx,llcrnry=ly,urcrnrx=ux,urcrnry=uy, area_thresh=2000)
             axf = fig.add_axes([-0.001,-0.001,1.002,1.002])
             axf.set_rasterization_zorder(1)
         else:
@@ -447,7 +447,7 @@ def geramapa(obj, diam, *args, **kwargs):
         ax3 = ax + (diam/2.0)*np.sin(paplus)
         by3 = by + (diam/2.0)*np.cos(paplus)
 
-        lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.longitude.value, centers.latitude.value)
+        lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.lon.value, centers.lat.value)
         j = np.where(lon1 < 1e+30)
         xs, ys = m(lon1[j], lat1[j])
         xs = [i for i in xs if i < 1e+30]
@@ -456,7 +456,7 @@ def geramapa(obj, diam, *args, **kwargs):
         j = np.where(lon1 > 1e+30)
         m.plot(ax2[j].value, by2[j].value, color=outcolor, clip_on=False, zorder=-0.2)
 
-        lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.longitude.value, centers.latitude.value)
+        lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.lon.value, centers.lat.value)
         j = np.where(lon2 < 1e+30)
         xt, yt = m(lon2[j], lat2[j])
         xt = [i for i in xt if i < 1e+30]
@@ -473,14 +473,14 @@ def geramapa(obj, diam, *args, **kwargs):
             by2 = by - errd*np.cos(paplus) - (diam/2.0)*np.cos(paplus)
             ax3 = ax + errd*np.sin(paplus) + (diam/2.0)*np.sin(paplus)
             by3 = by + errd*np.cos(paplus) + (diam/2.0)*np.cos(paplus)
-            lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.longitude.value, centers.latitude.value)
+            lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.lon.value, centers.lat.value)
             j = np.where(lon1 < 1e+30)
             xs, ys = m(lon1[j], lat1[j])
             xs = [i for i in xs if i < 1e+30]
             ys = [i for i in ys if i < 1e+30]
             m.plot(xs, ys, '--', color=ercolor)
 
-            lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.longitude.value, centers.latitude.value)
+            lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.lon.value, centers.lat.value)
             j = np.where(lon2 < 1e+30)
             xt, yt = m(lon2[j], lat2[j])
             xt = [i for i in xt if i < 1e+30]
@@ -494,14 +494,14 @@ def geramapa(obj, diam, *args, **kwargs):
             by2 = by - rng*np.cos(paplus)
             ax3 = ax + rng*np.sin(paplus)
             by3 = by + rng*np.cos(paplus)
-            lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.longitude.value, centers.latitude.value)
+            lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.lon.value, centers.lat.value)
             j = np.where(lon1 < 1e+30)
             xs, ys = m(lon1[j], lat1[j])
             xs = [i for i in xs if i < 1e+30]
             ys = [i for i in ys if i < 1e+30]
             m.plot(xs, ys, '--', color=rncolor)
 
-            lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.longitude.value, centers.latitude.value)
+            lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.lon.value, centers.lat.value)
             j = np.where(lon2 < 1e+30)
             xt, yt = m(lon2[j], lat2[j])
             xt = [i for i in xt if i < 1e+30]
@@ -515,14 +515,14 @@ def geramapa(obj, diam, *args, **kwargs):
             by2 = by - atmo*np.cos(paplus)
             ax3 = ax + atmo*np.sin(paplus)
             by3 = by + atmo*np.cos(paplus)
-            lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.longitude.value, centers.latitude.value)
+            lon1, lat1 = xy2latlon(ax2.value, by2.value, centers.lon.value, centers.lat.value)
             j = np.where(lon1 < 1e+30)
             xs, ys = m(lon1[j], lat1[j])
             xs = [i for i in xs if i < 1e+30]
             ys = [i for i in ys if i < 1e+30]
             m.plot(xs, ys, color=atcolor)
 
-            lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.longitude.value, centers.latitude.value)
+            lon2, lat2 = xy2latlon(ax3.value, by3.value, centers.lon.value, centers.lat.value)
             j = np.where(lon2 < 1e+30)
             xt, yt = m(lon2[j], lat2[j])
             xt = [i for i in xt if i < 1e+30]
@@ -604,3 +604,4 @@ int(stars[elem].ra.hms.h), int(stars[elem].ra.hms.m), stars[elem].ra.hms.s, int(
         for i in vals:
             compute(i)
         
+

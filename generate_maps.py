@@ -58,7 +58,7 @@ for arq in os.listdir(os.getcwd()):
     if os.path.isfile(arq) and arq.lower().endswith(".png"):
         result = os.path.join(data_dir, os.path.basename(arq))
         shutil.move(arq, result)
-        os.chmod(result, 0644)
+        os.chmod(result, 0664)
         result_files.append(result)
 
 print("%s Maps were generated" % len(result_files))

@@ -1,6 +1,11 @@
 
-# Para fazer alteraçoes em algum script e testar de forma mais facil, copia o script para a pasta teste e executa com essa instrucao
-# docker run -it --rm --name praia_occ --volume $PWD/data:/data --volume $PWD/:/app  praia-occultation:latest python run.py
+# Para fazer alteraçoes em algum script e testar de forma mais facil montar o volume app 
+# docker run -it --rm \
+#     --name praia_occ \
+#     --volume $PWD/data:/data \
+#     --volume $PWD/:/app \
+#     praia-occultation:latest \
+#     /bin/bash
 
 
 # # Exemplo de como executar o comando generate_dates
@@ -35,3 +40,11 @@
 #     praia-occultation:latest  \
 #     python search_candidate_stars.py /data/PRAIA_occ_star_search_12.dat
 
+
+# Exemplo de comando para executar o programa de Mapas
+#   docker run -it --rm \
+#     --name praia_occ \
+#     --volume $PWD/data:/data \
+#     --volume $PWD/:/app \
+#     praia-occultation:latest \
+#     python generate_maps.py 1999RB216 147 g4_occ_data_JOHNSTON_table

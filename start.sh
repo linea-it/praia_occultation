@@ -1,4 +1,7 @@
 
+# Comando para fazer o Build do Container
+# docker build -t linea/praiaoccultation:latest .
+
 # Para fazer alteraçoes em algum script e testar de forma mais facil montar o volume app 
 # docker run -it --rm \
 #     --name praia_occ \

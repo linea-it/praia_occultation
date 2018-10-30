@@ -9,6 +9,8 @@ import subprocess
 import os
 import spiceypy as spice
 import math
+from datetime import datetime
+import numpy as np
 
 data_dir = os.environ.get("DIR_DATA")
 config_file = args.config
@@ -46,6 +48,44 @@ def fixtable(filename):
     inoutFile.writelines(contents) #write the new content in the blank file
     inoutFile.close()
 
+
+#Function to extract right ascension or declination from a array
+#The index of specific columns (RA or Dec) is defined inside of indexList 
+def getPositionFromOCCtable(dataArray, indexList):
+    return [' '.join(pos) for pos in dataArray[:, indexList]]
+
+
+#Function to convert data from ascii table (generate by PRAIA OCC) to csv file
+def asciiTable2csv(inputFile, outputFile):
+    data = np.loadtxt(inputFile, skiprows=41, dtype=str)
+
+    nRows, nCols = data.shape
+
+    date = [datetime.strptime(' '.join(d), "%d %m %Y %H %M %S.") for d in data[:,range(6)]]
+
+    dateAndPositions = []
+    dateAndPositions.append(date)
+
+    #Extracting positions of stars and objects and save it in a array
+    for i in range(6,17,3):
+        dateAndPositions.append(getPositionFromOCCtable(data, [i, i+1, i+2]))
+
+    dateAndPositions = np.array(dateAndPositions)
+    dateAndPositions = dateAndPositions.T
+
+    #Extracting others parameters (C/A, P/A, etc.)
+    otherParameters = data[:, range(18, nCols)]
+
+    newData = np.concatenate((dateAndPositions, otherParameters), 1) 
+
+    #Defining the column's names
+    colNames = "occultation_date; ra_star_candidate; dec_star_candidate; ra_object; " \
+                "dec_object; ca; pa; vel; delta; g; j; h; k; long; loc_t; " \
+                "off_ra; off_de; pm; ct; f; e_ra; e_de; pmra; pmde"
+
+    np.savetxt(outputFile, newData, fmt='%s', header=colNames, delimiter=';')
+
+
 try:
 
     params = []
@@ -53,10 +93,16 @@ try:
         for line in fp:
             params.append(line.split()[0].strip())
 
+    table = params[7]
+
 
     searchCandidates(config_file, log)
 
-    fixtable(params[7])
+    fixtable(table)
+
+    # Convert table to csv
+    print("Converting to csv")
+    asciiTable2csv(table, table + ".csv")
 
     exit(0)
 

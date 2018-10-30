@@ -102,7 +102,7 @@ try:
 
     # Convert table to csv
     print("Converting to csv")
-    asciiTable2csv(table, table + ".csv")
+    asciiTable2csv(table, "occultation_table.csv")
 
     exit(0)
 

@@ -15,6 +15,8 @@ import numpy as np
 data_dir = os.environ.get("DIR_DATA")
 config_file = args.config
 log_filename = args.log
+csv_file = os.path.join(data_dir, "occultation_table.csv")
+
 
 log = os.path.join(data_dir, log_filename)
 
@@ -61,7 +63,17 @@ def asciiTable2csv(inputFile, outputFile):
 
     nRows, nCols = data.shape
 
-    date = [datetime.strptime(' '.join(d), "%d %m %Y %H %M %S.") for d in data[:,range(6)]]
+    #To avoid 60 in seconds (provided by PRAIA occ), 
+    date = []
+    for d in data[:,range(6)]:
+        if d[5] == '60.':
+            d[4] = int(d[4]) + 1
+            d[5] = '00.'
+        date.append(datetime.strptime(' '.join(d), "%d %m %Y %H %M %S."))
+
+    #use this definition when seconds = 0..59    
+    #date = [datetime.strptime(' '.join(d), "%d %m %Y %H %M %S.") for d in data[:,range(6)]]
+
 
     dateAndPositions = []
     dateAndPositions.append(date)
@@ -101,8 +113,9 @@ try:
     fixtable(table)
 
     # Convert table to csv
-    print("Converting to csv")
-    asciiTable2csv(table, "occultation_table.csv")
+    print("Convert table to csv")
+    asciiTable2csv(os.path.join(data_dir, "g4_occ_data_JOHNSTON_2018_table"), csv_file)
+    
 
     exit(0)
 

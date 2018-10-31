@@ -91,9 +91,9 @@ def asciiTable2csv(inputFile, outputFile):
     newData = np.concatenate((dateAndPositions, otherParameters), 1) 
 
     #Defining the column's names
-    colNames = "occultation_date; ra_star_candidate; dec_star_candidate; ra_object; " \
-                "dec_object; ca; pa; vel; delta; g; j; h; k; long; loc_t; " \
-                "off_ra; off_de; pm; ct; f; e_ra; e_de; pmra; pmde"
+    colNames = "occultation_date;ra_star_candidate;dec_star_candidate;ra_object;" \
+                "dec_object;ca;pa;vel;delta;g;j;h;k;long;loc_t;" \
+                "off_ra;off_de;pm;ct;f;e_ra;e_de;pmra;pmde"
 
     np.savetxt(outputFile, newData, fmt='%s', header=colNames, delimiter=';')
 

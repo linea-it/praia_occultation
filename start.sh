@@ -51,3 +51,8 @@ docker run -it --rm \
     --volume $PWD/:/app \
     linea/praiaoccultation:latest \
     python generate_maps.py 1999RB216 147 g4_occ_data_JOHNSTON_table
+
+#   docker run -it --rm --name praia_occ --volume $PWD/data:/data --volume $PWD/:/app linea/praiaoccultation:latest python generate_maps.py 1996RR20 200 g4_occ_data_JOHNSTON_2018_table
+
+
+    

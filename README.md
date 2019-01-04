@@ -2,6 +2,14 @@
 ## Requisitos
 Docker: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-18-04
 
+## Clone do repositório 
+```
+git clone https://github.com/linea-it/praia_occultation.git nima
+```
+entrar no diretório 
+```
+cd nima
+```
 
 ## User
 ### Download da imagem versão estavel 

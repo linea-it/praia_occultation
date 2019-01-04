@@ -59,7 +59,7 @@ def getPositionFromOCCtable(dataArray, indexList):
 
 #Function to convert data from ascii table (generate by PRAIA OCC) to csv file
 def asciiTable2csv(inputFile, outputFile):
-    data = np.loadtxt(inputFile, skiprows=41, dtype=str)
+    data = np.loadtxt(inputFile, skiprows=41, dtype=str, ndmin=2)
 
     nRows, nCols = data.shape
 

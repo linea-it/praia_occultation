@@ -1,6 +1,7 @@
 #!/usr/bin/python2.7
 import argparse
 parser = argparse.ArgumentParser()
+parser.add_argument("name", help="Object name")
 parser.add_argument("dates_file", help="")
 parser.add_argument("bsp_object", help="")
 parser.add_argument("bsp_planets", help="")
@@ -8,6 +9,8 @@ parser.add_argument("filename", help="")
 parser.add_argument("--leap_sec", default="naif0012.tls", help="")
 parser.add_argument("--radec_filename", default="radec.txt", help="")
 parser.add_argument("--positions_filename", default="positions.txt", help="")
+parser.add_argument("--footprint", default="des-round17-poly.txt", help="File containing the coordinates of the footprint used in the position plot.")
+parser.add_argument("--ecliptic_galactic", default="eclipticGalacticData.csv", help="File containing Ecliptic plane and Galactic plane.")
 
 
 args = parser.parse_args()
@@ -16,6 +19,7 @@ import subprocess
 import os
 import spiceypy as spice
 import math
+from plot_orbit_In_sky import *
 
 
 
@@ -129,10 +133,13 @@ def generatePositions(ephemeris, positions):
 
 # ============ Generating ephemeris =============
 
+object_name = args.name
 dates_file = args.dates_file
 bsp_object = args.bsp_object
 bsp_planets = args.bsp_planets
 leap_sec = args.leap_sec
+footprint = args.footprint
+ecliptic_galactic = args.ecliptic_galactic
 
 
 result_filename = args.filename
@@ -149,6 +156,7 @@ in_leap_sec = os.path.join(data_dir, leap_sec)
 ephemeris = os.path.join(data_dir, result_filename)
 radec = os.path.join(data_dir, radec_filename)
 positions = os.path.join(data_dir, positions_filename)
+orbit_in_sky = os.path.join(data_dir, 'asteroid_orbit.png')
 
 if not os.path.exists(dates_file):
     if os.path.exists(in_dates_file):
@@ -188,6 +196,10 @@ try:
 
     # Generate Positions
     generatePositions(ephemeris, positions)
+
+    # Gerar plot Orbit in Sky
+    plotOrbit(object_name, footprint, ecliptic_galactic, positions, orbit_in_sky)
+    os.chmod(orbit_in_sky, 0776)
 
     if not os.path.exists(positions):
         exit(2)

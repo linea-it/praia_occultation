@@ -44,6 +44,9 @@ docker run -it --rm \
 #     python search_candidate_stars.py /data/PRAIA_occ_star_search_12.dat
 
 
+# Exemplo de como gerar plot de estrelas + ephemeris
+docker run -it --rm --name praia_occ --volume $PWD/data:/data --volume $PWD/:/app linea/praiaoccultation:latest python plot_ephem_stars.py /data/Eris.eph /data/gaia_catalog.csv /data/positions.txt
+
 # Exemplo de comando para executar o programa de Mapas
   docker run -it --rm \
     --name praia_occ \

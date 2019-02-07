@@ -27,7 +27,7 @@ RUN pip install --upgrade pip \
 		certifi==2018.10.15 \
 		pyOpenSSL==18.0.0 \
 		cffi==1.11.5 \
-		numpy==1.15.1 \
+		numpy==1.15.2 \
 		astropy==2.0.8 \
 		spiceypy==2.1.2 \
 		matplotlib==1.5.1 \

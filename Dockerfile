@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
 		unzip \
 		libgeos-3.5.1 \
 		libgeos-dev \
+		python3-numpy \
 		vim \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -27,7 +28,6 @@ RUN pip install --upgrade pip \
 		certifi==2018.10.15 \
 		pyOpenSSL==18.0.0 \
 		cffi==1.11.5 \
-		numpy==1.15.2 \
 		astropy==2.0.8 \
 		spiceypy==2.1.2 \
 		matplotlib==1.5.1 \
@@ -37,6 +37,8 @@ RUN pip install --upgrade pip \
 		pyproj==1.9.5.1 \
 		pyshp==1.2.12 \
 	&& pip freeze
+
+# numpy==1.15.2 \
 
 
 RUN mkdir $APP_PATH 

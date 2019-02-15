@@ -179,7 +179,7 @@ def delta_mag(mp,ms, show=True):
 ################################################################################################################################
 
 def geramapa(obj, diam, *args, **kwargs):
-    print("---------------------------------------------------------------------")
+    print("######################## Gera Mapas ########################")
     print("Gerando mapas para Objeto [ %s ] Diametro [ %s ]" % (obj, diam))
 ##### Default values ###########################################
     mapstyle = 1
@@ -218,18 +218,30 @@ def geramapa(obj, diam, *args, **kwargs):
     if os.path.isfile(arquivo) == False:
         raise IOError('File {} not found'.format(arquivo))
     try:
+        print("Lendo tabela de predicao. [ %s ]" % arquivo)
+
         dados = np.loadtxt(arquivo, skiprows=41, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 18, 19, 20, 21, 22, 25, 26, 28, 29), \
             dtype={'names': ('dia', 'mes', 'ano', 'hor', 'min', 'sec', 'afh', 'afm', 'afs', 'ded', 'dem', 'des', 'ca', 'pa', 'vel', 'delta', 'mR', 'mK', 'long', 'ora', 'ode'), 
             'formats': ('S30', 'S30', 'S30','S30', 'S30', 'S30','S20', 'S20', 'S20','S20', 'S20', 'S20', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8')}, ndmin=1)
+
+        print("Predicoes: [ %s ] " % dados.size)
     except:
         raise IOError('{} is not in PRAIA format'.format(arquivo))
 ################## lendo coordenadas #################
+    print("-------------- Lendo Coordendas --------------")
+
     coor = np.char.array(dados['afh'], unicode=True)
     for i in ['afm', 'afs', 'ded', 'dem', 'des']:
         coor = np.core.defchararray.add(coor, ' ')
         coor = np.core.defchararray.add(coor, np.char.array(dados[i], unicode=True))
     stars = SkyCoord(coor, frame='icrs', unit=(u.hourangle, u.degree))
+
+    print("Stars:")
+    print(stars)
+
 ################### lendo tempo ########################
+    print("-------------- Lendo Tempo --------------")
+
     tim=np.char.array(dados['ano'], unicode=True)
     len_iso = ['-', '-', ' ', ':',':']
     arr = ['mes', 'dia', 'hor', 'min', 'sec']
@@ -238,7 +250,13 @@ def geramapa(obj, diam, *args, **kwargs):
         tim = np.core.defchararray.add(tim, np.char.array(dados[arr[i]], unicode=True))
     tim = np.char.array(tim) + '000'
     datas = Time(tim, format='iso', scale='utc')
+
+    print("Datas:")
+    print(datas)    
 ############### definindo parametros #############
+
+    print("-------------- Definindo Parametros --------------")
+
     ca = dados['ca']*u.arcsec
     posa = dados['pa']*u.deg
     vel = dados['vel']*(u.km/u.s)
@@ -254,36 +272,50 @@ def geramapa(obj, diam, *args, **kwargs):
         mapstyle = kwargs['mapstyle']
     if not type(mapstyle) == int:
         raise TypeError('mapstyle keyword must be an integer')
-    
+
+    print("mapstyle: %s" % mapstyle)
+
     if 'resolution' in kwargs.keys():
         resolution = kwargs['resolution']
     if resolution not in ['c', 'l', 'i', 'h', 'f']:
         raise TypeError('resolution keyword must be one of these: [c, l, i, h, f]')
     
+    print("resolution: %s" % resolution)
+
     if 'fmt' in kwargs.keys():
         fmt = kwargs['fmt']
     if not type(fmt) == str:
         raise TypeError('fmt keyword must be a string')
+    
+    print("fmt: %s" % fmt)
     
     if 'dpi' in kwargs.keys():
         dpi = kwargs['dpi']
     if not type(dpi) == int:
         raise TypeError('dpi keyword must be an integer')
         
+    print("dpi: %s" % dpi)
+
     if 'step' in kwargs.keys():
         step = kwargs['step']
     if not type(step) in [int,float]:
         raise TypeError('step keyword must be a number')
+
+    print("step: %s" % step)
 
     if 'sitearq' in kwargs.keys():
         sitearq = kwargs['sitearq']
     if not type(sitearq) == str:
         raise TypeError('sitearq keyword must be a string')
         
+    print("sitearq: %s" % sitearq)
+
     if 'country' in kwargs.keys():
         country = kwargs['country']
     if not type(country) == str:
         raise TypeError('country keyword must be a string')
+
+    print("country: %s" % country)
 
     if 'mapsize' in kwargs.keys():
         mapsize = kwargs['mapsize']
@@ -291,50 +323,73 @@ def geramapa(obj, diam, *args, **kwargs):
         raise TypeError('mapsize keyword must be a list with 2 numbers')
     mapsize = mapsize*u.cm
         
+    print("mapsize: %s" % mapsize)
+
     if 'erro' in kwargs.keys():
         erro = kwargs['erro']
     if not type(erro) in [int,float,type(None)]:
         raise TypeError('erro keyword must be a number')
         
+    print("erro: %s" % erro)
+
     if 'ring' in kwargs.keys():
         ring = kwargs['ring']
     if not type(ring) in [int,float,type(None)]:
         raise TypeError('ring keyword must be a number')
         
+    print("ring: %s" % ring)
+
     if 'atm' in kwargs.keys():
         atm = kwargs['atm']
     if not type(atm) in [int,float,type(None)]:
         raise TypeError('atm keyword must be a number')
     
+    print("atm: %s" % atm)
+
     if 'cpoints' in kwargs.keys():
         cpoints = kwargs['cpoints']
     if not type(cpoints) in [int]:
         raise TypeError('cpoints keyword must be an integer')
         
+    print("cpoints: %s" % cpoints)
+
     if 'limits' in kwargs.keys():
         maplats = False
         limits = kwargs['limits']
         if type(limits[0]) == float:
             maplats = True
         
+    print("limits: %s" % limits)
+
     if ('meridians' in kwargs.keys()) and (type(kwargs['meridians']) in [int,float]):
         meridians = kwargs['meridians']
+
+    print("meridians: %s" % meridians)
 
     if ('parallels' in kwargs.keys()) and (type(kwargs['parallels']) in [int,float]):
         parallels = kwargs['parallels']
         
+    print("parallels: %s" % parallels)
+
     if ('nscale' in kwargs.keys()) and (type(kwargs['nscale']) in [int,float]):
         nscale = kwargs['nscale']
         
+    print("nscale: %s" % nscale)
+
     if ('sscale' in kwargs.keys()) and (type(kwargs['sscale']) in [int,float]):
         sscale = kwargs['sscale']
         
+    print("sscale: %s" % sscale)
+
     if ('cscale' in kwargs.keys()) and (type(kwargs['cscale']) in [int,float]):
         cscale = kwargs['cscale']
         
+    print("cscale: %s" % cscale)
+
     if ('pscale' in kwargs.keys()) and (type(kwargs['pscale']) in [int,float]):
         pscale = kwargs['pscale']
-        
+
+    print("pscale: %s" % pscale)
 ##############################################################################################################################################################        
 #### Define funcao que computa e gera o mapa para cada predicao ##############################################################################################
 ##############################################################################################################################################################
@@ -344,7 +399,11 @@ def geramapa(obj, diam, *args, **kwargs):
 
         r = 6370997.0
         
+        print("r: %s" % r)
+
 ########## aplica offsets ######
+        print("-------------- Aplica Offsets --------------")
+
         off_ra = 0.0*u.mas
         off_de = 0.0*u.mas
         ob_ra = 0.0*u.mas
@@ -365,7 +424,20 @@ def geramapa(obj, diam, *args, **kwargs):
         ca1 = ca[elem] + dca
         data = datas[elem] + dt
         
+        print("off_ra: %s" % off_ra)
+        print("off_de: %s" % off_de)
+        print("ob_ra: %s" % ob_ra)
+        print("ob_de: %s" % ob_de)
+        print("st_off_ra: %s" % st_off_ra)
+        print("dca: %s" % dca)
+        print("dt: %s" % dt)
+        print("ca1: %s" % ca1)
+        print("data: %s" % data)
+
 ##### define parametros do mapa #####
+
+        print("-------------- define parametros do mapa --------------")
+
         lon = stars[elem].ra - data.sidereal_time('mean', 'greenwich')
         center_map = EarthLocation(lon, stars[elem].dec)
         centert = True
@@ -466,6 +538,8 @@ def geramapa(obj, diam, *args, **kwargs):
             outcolor = kwargs['outcolor']
 
 ########### calcula caminho ##################
+        print("-------------- calcula caminho --------------")
+
         vec = np.arange(0, int(8000/(np.absolute(vel[elem].value))), step)
         vec = np.sort(np.concatenate((vec,-vec[1:]), axis=0))
         pa = Angle(posa[elem])
@@ -633,7 +707,9 @@ int(stars[elem].ra.hms.h), int(stars[elem].ra.hms.m), stars[elem].ra.hms.s, int(
         print("--------- imprime os sitios ---------")
         if os.path.isfile(sitearq) == True:
             sites = np.loadtxt(sitearq, ndmin=1,  dtype={'names': ('lat', 'lon', 'alt', 'nome', 'offx', 'offy', 'color'), 'formats': ('f8', 'f8', 'f8', 'S30',  'f8', 'f8', 'S30')}, delimiter=',')
+
             print(sites)
+
             xpt,ypt = m(sites['lon'],sites['lat'])
             sss = EarthLocation(sites['lon']*u.deg,sites['lat']*u.deg,sites['alt']*u.km)
             for i in np.arange(len(xpt)):
@@ -642,8 +718,7 @@ int(stars[elem].ra.hms.h), int(stars[elem].ra.hms.m), stars[elem].ra.hms.s, int(
 
 ####### finaliza a plotagem do mapa#####
         print("--------- finaliza a plotagem do mapa ---------")
-        print("Title: %s" % title)
-        print("mapsize: %s" % mapsize)
+
         plt.title(title, fontsize=mapsize[0].value*25/46, fontproperties='FreeMono', weight='bold')
 
         plt.xlabel(labelx, fontsize=mapsize[0].value*21/46, fontproperties='FreeMono', weight='bold')
@@ -657,7 +732,7 @@ int(stars[elem].ra.hms.h), int(stars[elem].ra.hms.m), stars[elem].ra.hms.s, int(
         print("dpi: %s" % dpi)
 
         plt.savefig('{}.{}'.format(nameimg, fmt), format=fmt, dpi=dpi)
-        # plt.savefig(nameimg, format=fmt)
+
         print('Gerado: {}.{}'.format(nameimg, fmt))
         plt.clf()
         plt.close()

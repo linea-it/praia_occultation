@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 		libffi-dev \
 		gfortran \
 		unzip \
-		libgeos-3.5.1 \
+		libgeos-3.7.1 \
 		libgeos-dev \
 		python3-numpy \
 		vim \
@@ -38,19 +38,15 @@ RUN pip install --upgrade pip \
 		pyshp==1.2.12 \
 	&& pip freeze
 
-# numpy==1.15.2 \
-
-
 RUN mkdir $APP_PATH
 
 WORKDIR $APP_PATH
 
 COPY . $APP_PATH
-COPY iers_table.py $APP_PATH
-
-# Download Finals for astropy
-RUN ./iers_table.py
 
 RUN cd ${APP_PATH}/basemap-1.1.0 \
 		&& python setup.py install
 
+# Download Finals for astropy
+COPY iers_table.py $APP_PATH
+RUN ./iers_table.py

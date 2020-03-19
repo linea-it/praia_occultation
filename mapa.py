@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from mpl_toolkits.basemap import Basemap
 import matplotlib
 matplotlib.use('Agg')
@@ -12,7 +13,19 @@ from multiprocessing import Pool
 
 # Deligar o auto Download do Finals2000
 # https://docs.astropy.org/en/stable/utils/iers.html#working-offline
+# iers.conf.auto_download = False
+# Glauber 19/03/2020 - A solução anterior parou de funcionar, 
+# O path para download do arquivo finals2000A.all mudou, e depois da mudança 
+# mesmo baixando o arquivo no build do container continuava dando erro. 
+# Foi necessário desligar o auto download que aponta para o endereço errado. 
+# Fazer o download do arquivo a cada execução
+# e desligar a verificação de validade do arquivo. 
+# Não sei o impacto no resultado. 
+# TODO: Procurar uma maneira de baixar este arquivo uma unica vez. 
 iers.conf.auto_download = False
+finalFile = 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'
+iers.IERS.iers_table = iers.IERS_A.open(finalFile)
+iers.conf.auto_max_age = None
 
 ################################################################################################################################
 
@@ -445,6 +458,8 @@ def geramapa(obj, diam, *args, **kwargs):
         lon = stars[elem].ra - data.sidereal_time('mean', 'greenwich')
         center_map = EarthLocation(lon, stars[elem].dec)
         centert = True
+
+
         if 'centermap' in kwargs.keys():
             if not type(kwargs['centermap']) == EarthLocation:
                 raise TypeError('centermap must be an Astropy EarthLocation Object')

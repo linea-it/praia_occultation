@@ -7,8 +7,12 @@ import os
 import astropy.units as u
 from astropy.time import Time, TimeDelta
 from astropy.coordinates import SkyCoord, EarthLocation, Angle, FK5
+from astropy.utils import iers
 from multiprocessing import Pool
 
+# Deligar o auto Download do Finals2000
+# https://docs.astropy.org/en/stable/utils/iers.html#working-offline
+iers.conf.auto_download = False
 
 ################################################################################################################################
 
@@ -40,9 +44,9 @@ def xy2latlon(y, z, loncen, latcen):
         lon = 1e+31
         lat = 1e+31
     return lon, lat
-    
+
 ################################################################################################################################
-    
+
 def latlon2xy(site, center):
 #    r = 6370997.0
     x1 = np.cos(center.lat)*np.cos(center.lon)*site.x.value + np.cos(center.lat)*np.sin(center.lon)*site.y.value + np.sin(center.lat)*site.z.value
@@ -58,14 +62,14 @@ def latlon2xy(site, center):
         y1 = 1e+31
         z1 = y1
     return y1, z1
-    
+
 ################################################################################################################################
 
 def report(predic, sitearq, step=0.1, **kwargs):
 #################### Lendo arquivo ###################################
     try:
         dados = np.loadtxt(predic, skiprows=41, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 18, 19, 20, 21, 22, 25, 26, 28, 29), \
-            dtype={'names': ('dia', 'mes', 'ano', 'hor', 'min', 'sec', 'afh', 'afm', 'afs', 'ded', 'dem', 'des', 'ca', 'pa', 'vel', 'delta', 'mR', 'mK', 'long', 'ora', 'ode'), 
+            dtype={'names': ('dia', 'mes', 'ano', 'hor', 'min', 'sec', 'afh', 'afm', 'afs', 'ded', 'dem', 'des', 'ca', 'pa', 'vel', 'delta', 'mR', 'mK', 'long', 'ora', 'ode'),
             'formats': ('S30', 'S30', 'S30','S30', 'S30', 'S30','S20', 'S20', 'S20','S20', 'S20', 'S20', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8')}, ndmin=1)
     except:
         raise IOError('{} is not in PRAIA format'.format(arquivo))
@@ -80,7 +84,7 @@ def report(predic, sitearq, step=0.1, **kwargs):
     len_iso = ['-', '-', ' ', ':',':']
     arr = ['mes', 'dia', 'hor', 'min', 'sec']
     for i in np.arange(len(arr)):
-        tim = np.core.defchararray.add(tim, len_iso[i]) 
+        tim = np.core.defchararray.add(tim, len_iso[i])
         tim = np.core.defchararray.add(tim, dados[arr[i]])
     tim = np.char.array(tim) + '000'
     datas = Time(tim, format='iso', scale='utc')
@@ -95,7 +99,7 @@ def report(predic, sitearq, step=0.1, **kwargs):
     magK = dados['mK']
     longi = dados['long']
     datas.delta_ut1_utc = 0
-    
+
     for elem in np.arange(len(stars)):
         print('Occ {}'.format(datas[elem].iso))
 ########## aplica offsets ######
@@ -118,7 +122,7 @@ def report(predic, sitearq, step=0.1, **kwargs):
         dt = ((off_ra*np.cos(posa[elem]) - off_de*np.sin(posa[elem])).to(u.rad)*dist[elem].to(u.km)/np.absolute(vel[elem])).value*u.s
         ca1 = ca[elem] + dca
         data = datas[elem] + dt
-        
+
     ########### calcula caminho ##################
         vec = np.arange(0, int(8000/(np.absolute(vel[elem].value))), step)
         vec = np.sort(np.concatenate((vec,-vec[1:]), axis=0))
@@ -139,10 +143,10 @@ def report(predic, sitearq, step=0.1, **kwargs):
         dista = (dist[elem].to(u.m)*np.sin(ca1))
         ax = dista*np.sin(pa) + (deltatime*vel[elem])*np.cos(paplus)
         by = dista*np.cos(pa) - (deltatime*vel[elem])*np.sin(paplus)
-            
+
         sites = np.loadtxt(sitearq, ndmin=1,  dtype={'names': ('lat', 'lon', 'alt', 'nome', 'offx', 'offy', 'color'), 'formats': ('f8', 'f8', 'f8', 'S30',  'f8', 'f8', 'S30')}, delimiter=',')
         sss = EarthLocation(sites['lon']*u.deg,sites['lat']*u.deg)
-        
+
         for i in np.arange(len(sss)):
             xxx,yyy = latlon2xy(sss[i], centers)
             ddd = np.sqrt((ax.value-xxx)**2+(by.value-yyy)**2)
@@ -161,7 +165,7 @@ def report(predic, sitearq, step=0.1, **kwargs):
                     rr = np.sqrt((kwargs['diam']/2.0)**2 - (ddd[mii]/1000.0)**2)
                     w = (rr*2.0)/vv
                     dur = 'Duration: {:.1f} s\n'.format(w)
-                
+
             print('  Site: {}\n    {}\n    {}'.format(sites[i]['nome'].strip(), cinst, dur))
 
 
@@ -175,7 +179,7 @@ def delta_mag(mp,ms, show=True):
         print('Flux Ratio = {:5.3f}'.format(fr))
         return
     return dm, fr
-    
+
 ################################################################################################################################
 
 def geramapa(obj, diam, *args, **kwargs):
@@ -221,7 +225,7 @@ def geramapa(obj, diam, *args, **kwargs):
         print("Lendo tabela de predicao. [ %s ]" % arquivo)
 
         dados = np.loadtxt(arquivo, skiprows=41, usecols=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 18, 19, 20, 21, 22, 25, 26, 28, 29), \
-            dtype={'names': ('dia', 'mes', 'ano', 'hor', 'min', 'sec', 'afh', 'afm', 'afs', 'ded', 'dem', 'des', 'ca', 'pa', 'vel', 'delta', 'mR', 'mK', 'long', 'ora', 'ode'), 
+            dtype={'names': ('dia', 'mes', 'ano', 'hor', 'min', 'sec', 'afh', 'afm', 'afs', 'ded', 'dem', 'des', 'ca', 'pa', 'vel', 'delta', 'mR', 'mK', 'long', 'ora', 'ode'),
             'formats': ('S30', 'S30', 'S30','S30', 'S30', 'S30','S20', 'S20', 'S20','S20', 'S20', 'S20', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8')}, ndmin=1)
 
         print("Predicoes: [ %s ] " % dados.size)
@@ -246,13 +250,13 @@ def geramapa(obj, diam, *args, **kwargs):
     len_iso = ['-', '-', ' ', ':',':']
     arr = ['mes', 'dia', 'hor', 'min', 'sec']
     for i in np.arange(len(arr)):
-        tim = np.core.defchararray.add(tim, len_iso[i]) 
+        tim = np.core.defchararray.add(tim, len_iso[i])
         tim = np.core.defchararray.add(tim, np.char.array(dados[arr[i]], unicode=True))
     tim = np.char.array(tim) + '000'
     datas = Time(tim, format='iso', scale='utc')
 
     print("Datas:")
-    print(datas)    
+    print(datas)
 ############### definindo parametros #############
 
     print("-------------- Definindo Parametros --------------")
@@ -267,7 +271,7 @@ def geramapa(obj, diam, *args, **kwargs):
     magK = dados['mK']
     longi = dados['long']
     datas.delta_ut1_utc = 0
-        
+
     if 'mapstyle' in kwargs.keys():
         mapstyle = kwargs['mapstyle']
     if not type(mapstyle) == int:
@@ -279,21 +283,21 @@ def geramapa(obj, diam, *args, **kwargs):
         resolution = kwargs['resolution']
     if resolution not in ['c', 'l', 'i', 'h', 'f']:
         raise TypeError('resolution keyword must be one of these: [c, l, i, h, f]')
-    
+
     print("resolution: %s" % resolution)
 
     if 'fmt' in kwargs.keys():
         fmt = kwargs['fmt']
     if not type(fmt) == str:
         raise TypeError('fmt keyword must be a string')
-    
+
     print("fmt: %s" % fmt)
-    
+
     if 'dpi' in kwargs.keys():
         dpi = kwargs['dpi']
     if not type(dpi) == int:
         raise TypeError('dpi keyword must be an integer')
-        
+
     print("dpi: %s" % dpi)
 
     if 'step' in kwargs.keys():
@@ -307,7 +311,7 @@ def geramapa(obj, diam, *args, **kwargs):
         sitearq = kwargs['sitearq']
     if not type(sitearq) == str:
         raise TypeError('sitearq keyword must be a string')
-        
+
     print("sitearq: %s" % sitearq)
 
     if 'country' in kwargs.keys():
@@ -322,35 +326,35 @@ def geramapa(obj, diam, *args, **kwargs):
     if not type(mapsize) == list:
         raise TypeError('mapsize keyword must be a list with 2 numbers')
     mapsize = mapsize*u.cm
-        
+
     print("mapsize: %s" % mapsize)
 
     if 'erro' in kwargs.keys():
         erro = kwargs['erro']
     if not type(erro) in [int,float,type(None)]:
         raise TypeError('erro keyword must be a number')
-        
+
     print("erro: %s" % erro)
 
     if 'ring' in kwargs.keys():
         ring = kwargs['ring']
     if not type(ring) in [int,float,type(None)]:
         raise TypeError('ring keyword must be a number')
-        
+
     print("ring: %s" % ring)
 
     if 'atm' in kwargs.keys():
         atm = kwargs['atm']
     if not type(atm) in [int,float,type(None)]:
         raise TypeError('atm keyword must be a number')
-    
+
     print("atm: %s" % atm)
 
     if 'cpoints' in kwargs.keys():
         cpoints = kwargs['cpoints']
     if not type(cpoints) in [int]:
         raise TypeError('cpoints keyword must be an integer')
-        
+
     print("cpoints: %s" % cpoints)
 
     if 'limits' in kwargs.keys():
@@ -358,7 +362,7 @@ def geramapa(obj, diam, *args, **kwargs):
         limits = kwargs['limits']
         if type(limits[0]) == float:
             maplats = True
-        
+
     print("limits: %s" % limits)
 
     if ('meridians' in kwargs.keys()) and (type(kwargs['meridians']) in [int,float]):
@@ -368,29 +372,29 @@ def geramapa(obj, diam, *args, **kwargs):
 
     if ('parallels' in kwargs.keys()) and (type(kwargs['parallels']) in [int,float]):
         parallels = kwargs['parallels']
-        
+
     print("parallels: %s" % parallels)
 
     if ('nscale' in kwargs.keys()) and (type(kwargs['nscale']) in [int,float]):
         nscale = kwargs['nscale']
-        
+
     print("nscale: %s" % nscale)
 
     if ('sscale' in kwargs.keys()) and (type(kwargs['sscale']) in [int,float]):
         sscale = kwargs['sscale']
-        
+
     print("sscale: %s" % sscale)
 
     if ('cscale' in kwargs.keys()) and (type(kwargs['cscale']) in [int,float]):
         cscale = kwargs['cscale']
-        
+
     print("cscale: %s" % cscale)
 
     if ('pscale' in kwargs.keys()) and (type(kwargs['pscale']) in [int,float]):
         pscale = kwargs['pscale']
 
     print("pscale: %s" % pscale)
-##############################################################################################################################################################        
+##############################################################################################################################################################
 #### Define funcao que computa e gera o mapa para cada predicao ##############################################################################################
 ##############################################################################################################################################################
     def compute(elem):
@@ -398,7 +402,7 @@ def geramapa(obj, diam, *args, **kwargs):
         print("Predicao: [ %s ] Star RA: [ %s ] Dec: [ %s ]" %(elem, stars[elem].ra, stars[elem].dec))
 
         r = 6370997.0
-        
+
         print("r: %s" % r)
 
 ########## aplica offsets ######
@@ -423,7 +427,7 @@ def geramapa(obj, diam, *args, **kwargs):
         dt = ((off_ra*np.cos(posa[elem]) - off_de*np.sin(posa[elem])).to(u.rad)*dist[elem].to(u.km)/np.absolute(vel[elem])).value*u.s
         ca1 = ca[elem] + dca
         data = datas[elem] + dt
-        
+
         print("off_ra: %s" % off_ra)
         print("off_de: %s" % off_de)
         print("ob_ra: %s" % ob_ra)
@@ -608,7 +612,7 @@ def geramapa(obj, diam, *args, **kwargs):
             yt = [i for i in yt if i < 1e+30]
             m.plot(xt, yt, '--', color=ercolor)
 
-##### plot ring ##### 
+##### plot ring #####
         if ring:
             rng = ring*u.km
             ax2 = ax - rng*np.sin(paplus)
@@ -656,8 +660,8 @@ def geramapa(obj, diam, *args, **kwargs):
         axc = a + dista*np.sin(pa) + (deltatime*vel[elem])*np.cos(paplus)
         byc = b + dista*np.cos(pa) - (deltatime*vel[elem])*np.sin(paplus)
         if centert:
-            m.plot(axc.value, byc.value, 'o', color=ptcolor, clip_on=False, markersize=mapsize[0].value*pscale*8.0/46.0, zorder=-0.2) 
-        
+            m.plot(axc.value, byc.value, 'o', color=ptcolor, clip_on=False, markersize=mapsize[0].value*pscale*8.0/46.0, zorder=-0.2)
+
         datas2 = data + TimeDelta(deltatime)
         datas2.delta_ut1_utc = 0
         lon3 = stars[elem].ra - datas2.sidereal_time('mean', 'greenwich')
@@ -736,8 +740,8 @@ int(stars[elem].ra.hms.h), int(stars[elem].ra.hms.m), stars[elem].ra.hms.s, int(
         print('Gerado: {}.{}'.format(nameimg, fmt))
         plt.clf()
         plt.close()
-        
-    
+
+
 ####### roda todos as predicoes #####
     vals = np.arange(len(stars))
     if 'n' in kwargs.keys():
@@ -750,4 +754,3 @@ int(stars[elem].ra.hms.h), int(stars[elem].ra.hms.m), stars[elem].ra.hms.s, int(
     else:
         for i in vals:
             compute(i)
-        

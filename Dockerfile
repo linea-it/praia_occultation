@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 		gcc \
 		python-dev \
 		libfreetype6-dev \
-		libpng-dev \ 
+		libpng-dev \
 		libffi-dev \
 		gfortran \
 		unzip \
@@ -41,12 +41,16 @@ RUN pip install --upgrade pip \
 # numpy==1.15.2 \
 
 
-RUN mkdir $APP_PATH 
+RUN mkdir $APP_PATH
 
 WORKDIR $APP_PATH
 
 COPY . $APP_PATH
+COPY iers_table.py $APP_PATH
+
+# Download Finals for astropy
+RUN ./iers_table.py
 
 RUN cd ${APP_PATH}/basemap-1.1.0 \
-		&& python setup.py install 
+		&& python setup.py install
 

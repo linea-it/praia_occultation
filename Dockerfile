@@ -48,19 +48,20 @@ WORKDIR $APP_PATH
 # 	--progress=bar:force:noscroll \ 
 # 	-o naif0012.tls https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
 
-# # Download da BSP planetary
-# O download demora muito, resolvi compactar o arquivo e deixar no repositório
-# RUN wget --no-verbose --show-progress \
-# 	--progress=bar:force:noscroll \ 
-# 	-o de435.bsp https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp
+# Download da BSP planetary
+# OBS. o Download demora bastante!
+RUN wget --no-verbose --show-progress \
+	--progress=bar:force:noscroll \ 
+	-o de435.bsp https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp
 
 
 # Copia os arquivos do repositório para dentro da imagem
 COPY . $APP_PATH
 
-# Unzip BSP Planetary
-RUN unzip de435.bsp.zip \
-	&& rm de435.bsp.zip
+# # Unzip BSP Planetary
+# RUN zip -F de435.bsp.zip --out single-archive.zip \
+# 	&& unzip de435.bsp.zip \
+# 	&& rm de435.bsp.zip single-archive.zip
 
 # Compilar o geradata usando gfortran-7, Importante se não for esta versão da erro!
 RUN cd ${APP_PATH}/src \

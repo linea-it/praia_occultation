@@ -27,7 +27,6 @@ RUN pip install \
 	six==1.11.0 \
 	certifi==2018.10.15 \
 	pyOpenSSL==18.0.0 \
-	# cffi==1.11.5 \
 	cffi==1.12 \	
 	astropy==2.0.8 \
 	spiceypy==2.1.2 \
@@ -37,6 +36,9 @@ RUN pip install \
 	Cython==0.29 \
 	pyproj==1.9.5.1 \
 	pyshp==1.2.12 \
+	SQLAlchemy==1.4.25 \
+	psycopg2-binary==2.8.6 \
+	pandas==0.24.2 \
 	&& pip freeze
 
 RUN mkdir $APP_PATH
@@ -99,6 +101,8 @@ RUN useradd --no-create-home --gid des-brazil --uid 1000 appuser
 
 # Adiciona o usuario Glauber porque quando o HTCondor roda está imagem é com o usuario que submeteu.
 RUN useradd --no-create-home --gid des-brazil --uid 10139 glauber.costa
+
+RUN chmod 777 /app
 
 # Troca o usuario para um que não é ROOT!
 USER appuser

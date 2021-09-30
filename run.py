@@ -48,6 +48,7 @@ if __name__ == "__main__":
         radec_filename = "radec.txt"
         positions_filename = "positions.txt"
         centers_filename = "centers.txt"
+        centers_deg_filename = "centers_deg.txt"
 
         data_dir = os.environ.get("DIR_DATA").rstrip('/')
 
@@ -55,7 +56,7 @@ if __name__ == "__main__":
         # Util só no desenvolimento quando se roda varias vezes o mesmo job.
         clear_for_rerun(
             input_files=[bsp_object_filename],
-            output_files=[dates_filename, eph_filename, radec_filename, positions_filename, centers_filename])
+            output_files=[dates_filename, eph_filename, radec_filename, positions_filename, centers_filename, centers_deg_filename])
 
         # Checar o arquivo de leapserconds
         leap_sec = check_leapsec(leap_sec_filename)
@@ -81,12 +82,12 @@ if __name__ == "__main__":
 
         print("Ephemeris File: [%s]" % eph_file)
 
-        # TODO: Verificar se é mesmo necessário!
-        # Gerar aquivo de posições
-        positions_file = generate_positions(
-            eph_filename, positions_filename)
+        # # TODO: Verificar se é mesmo necessário!
+        # # Gerar aquivo de posições
+        # positions_file = generate_positions(
+        #     eph_filename, positions_filename)
 
-        print("Positions File: [%s]" % positions_file)
+        # print("Positions File: [%s]" % positions_file)
 
         # TODO: Gerar plot Orbit in Sky se for necessário
         # plotOrbit(object_name, footprint, ecliptic_galactic,
@@ -99,6 +100,7 @@ if __name__ == "__main__":
 
         # Converter as posições do Centers.txt para graus
         center_positions_deg = centers_positions_to_deg(centers_file)
+
         # print(center_positions_deg)
         # TODO: Para cada posição executar a query no banco de dados.
 

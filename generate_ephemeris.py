@@ -22,6 +22,7 @@ import os
 import spiceypy as spice
 import math
 from library import HMS2deg
+import csv
 # from plot_orbit_In_sky import *
 
 
@@ -210,9 +211,19 @@ def centers_positions_to_deg(centers_file):
 
     a_radec = list()
     with open(centers_file, 'r') as f:
-        for line in f:
-            ra_hms, dec_hms = line.split('  ')
-            a_radec.append(HMS2deg(ra_hms, dec_hms))
+
+        with open('centers_deg.csv', 'w') as csvfile:
+            fieldnames = ['ra', 'dec']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for line in f:
+                ra_hms, dec_hms = line.split('  ')
+                radec = HMS2deg(ra_hms, dec_hms)
+                a_radec.append(radec)
+
+                print(a_radec)
+                writer.writerow({'ra': radec[0], 'dec': radec[1]})
 
     return a_radec
 

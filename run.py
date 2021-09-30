@@ -99,7 +99,9 @@ if __name__ == "__main__":
         print("Centers File: [%s]" % centers_file)
 
         # Converter as posições do Centers.txt para graus
-        center_positions_deg = centers_positions_to_deg(centers_file)
+        # gera um arquivo com as posições convertidas, mas o retorno da função é um array.
+        center_positions = centers_positions_to_deg(
+            centers_file, centers_deg_filename)
 
         # print(center_positions_deg)
         # TODO: Para cada posição executar a query no banco de dados.

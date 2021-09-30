@@ -207,12 +207,18 @@ def run_elimina(eph_filename, centers_filename):
         raise (Exception("Centers file not generated. [%s]" % output))
 
 
-def centers_positions_to_deg(centers_file):
+def centers_positions_to_deg(centers_file, centers_deg_filename):
+
+    app_path = os.environ.get("APP_PATH").rstrip('/')
+    data_dir = os.environ.get("DIR_DATA").rstrip('/')
+
+    output = os.path.join(data_dir, centers_deg_filename)
+    out_link = os.path.join(app_path, centers_deg_filename)
 
     a_radec = list()
     with open(centers_file, 'r') as f:
 
-        with open('centers_deg.csv', 'w') as csvfile:
+        with open(output, 'w') as csvfile:
             fieldnames = ['ra', 'dec']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
@@ -225,7 +231,15 @@ def centers_positions_to_deg(centers_file):
                 print(a_radec)
                 writer.writerow({'ra': radec[0], 'dec': radec[1]})
 
-    return a_radec
+    if os.path.exists(output):
+        # Altera permissão do arquivo para escrita do grupo
+        os.chmod(output, 0664)
+        # Cria um link simbolico no diretório app
+        os.symlink(output, out_link)
+
+        return a_radec
+    else:
+        raise (Exception("Centers Deg file not generated. [%s]" % output))
 
     # # ============ Generating ephemeris =============
 

@@ -76,10 +76,24 @@ class GaiaDao(Dao):
         })
 
         self.gaia_properties = [
-            "ra", "ra_error", "dec", "dec_error", "parallax", "pmra", "pmra_error", "pmdec",
+            "source_id", "ra", "ra_error", "dec", "dec_error", "parallax", "pmra", "pmra_error", "pmdec",
             "pmdec_error", "duplicated_source", "phot_g_mean_flux", "phot_g_mean_flux_error",
             "phot_g_mean_mag", "phot_variable_flag"
         ]
+
+        # Quantas posições por query.
+        self.POSITION_GROUP = 5
+
+    def chunks_positions(self, l, n):
+        n = max(1, n)
+        return (l[i:i+n] for i in range(0, len(l), n))
+
+    def q3c_clause(self, ra, dec, radius):
+
+        clause = 'q3c_radial_query("%s", "%s", %s, %s, %s)' % (
+            self.catalog["ra_property"], self.catalog["dec_property"], ra, dec, radius)
+
+        return clause
 
     def catalog_by_positions(self, positions, radius=0.15):
 
@@ -94,35 +108,64 @@ class GaiaDao(Dao):
 
             columns = ", ".join(self.gaia_properties)
 
-            results = []
-            for pos in positions:
-                print("Quering for pos %s" % pos)
-                where = 'q3c_radial_query("%s", "%s", % s, % s, % s)' % (
-                        self.catalog["ra_property"], self.catalog["dec_property"], pos[0], pos[1], radius)
+            # results = []
 
+            # # Agrupar clausulas em grupos para diminuir a quantidade de querys
+            # for gpos in dao.chunks_positions(positions, self.POSITION_GROUP):
+
+            #     clauses = list()
+
+            #     for pos in gpos:
+            #         clauses.append(self.q3c_clause(pos[0], pos[1], radius))
+
+            #     where = " OR ".join(clauses)
+            #     stm = """SELECT %s FROM %s WHERE %s """ % (
+            #         columns, tablename, where)
+
+            #     print(stm)
+
+            #     rows = self.fetch_all_dict(text(stm))
+            #     results += rows
+
+            #     del rows
+            #     del clauses
+
+            # return results
+
+            df_results = None
+
+            # Agrupar clausulas em grupos para diminuir a quantidade de querys
+            for gpos in dao.chunks_positions(positions, self.POSITION_GROUP):
+
+                clauses = list()
+
+                for pos in gpos:
+                    clauses.append(self.q3c_clause(pos[0], pos[1], radius))
+
+                where = " OR ".join(clauses)
                 stm = """SELECT %s FROM %s WHERE %s """ % (
                     columns, tablename, where)
 
-                stm = """SELECT %s FROM %s where q3c_radial_query('ra', 'dec', 36.662958333333336, 5.367043333333333, 0.18) limit 10 """ % (
-                    columns, tablename)
-                print(stm)
+                df_rows = pd.read_sql(text(stm), con=self.get_db_engine())
 
-                rows = self.fetch_all_dict(text(stm))
-                results += rows
+                if df_results is None:
+                    df_results = df_rows
+                else:
+                    # Concatena o resultado da nova query com os resultados anteriores.
+                    # Tratando possiveis duplicatas.
+                    df_results = pd.concat(
+                        [df_results, df_rows]).drop_duplicates().reset_index(drop=True)
 
-                # temp_df = pd.read_sql(text(stm),
-                #                       con=self.get_db_engine())
+                del df_rows
+                del clauses
 
-                # print(temp_df.head())
-                # rows = 0
-
-            if len(results) >= 2100000:
+            if df_results.shape[0] >= 2100000:
                 pass
                 # self.logger.warning("Stellar Catalog too big")
                 # TODO marcar o status do Asteroid como warning.
                 # TODO implementar funcao para dividir o resutado em lista menores e executar em loop.
 
-            return results
+            return df_results
 
         except Exception as e:
             # logger.error(e)
@@ -142,39 +185,8 @@ if __name__ == "__main__":
         reader = csv.DictReader(csvfile)
         for row in reader:
             positions.append([row['ra'], row['dec']])
-            # a.append('q3c_radial_query("ra", "dec", %s, %s, 0.18)' % (
-            #     row['ra'], row['dec']))
 
-    # print(" or ".join(a))
+    df_catalog = dao.catalog_by_positions(positions, radius=0.15)
 
-    engine = dao.get_db_engine()
-    with engine.connect() as con:
-        # stm = 'SELECT * FROM gaia.dr2 WHERE q3c_radial_query("ra", "dec", 36.662958333333336, 5.367043333333333, 0.15) limit 10'
-        stm = 'SELECT * FROM gaia.dr2 limit 10'
-        queryset = con.execute(stm)
-        print(queryset)
-    # positions = []
-    # catalog = dao.catalog_by_positions(positions[0:2], radius=0.15)
-
-    # print(len(catalog))
-
-    # print("Teste2")
-
-    # dao = GaiaDao()
-
-    # print("Teste")
-
-    # import csv
-
-    # positions = list()
-    # with open('/data/centers_deg.csv', 'r') as csvfile:
-    #     reader = csv.DictReader(csvfile)
-    #     for row in reader:
-    #         positions.append([row['ra'], row['dec']])
-    #         # a.append('q3c_radial_query("ra", "dec", %s, %s, 0.18)' % (
-    #         #     row['ra'], row['dec']))
-
-    # # print(" or ".join(a))
-
-    # # positions = []
-    # # catalog = dao.catalog_by_positions(positions, radius=0.15)
+    print(df_catalog.shape[0])
+    print(df_catalog.head())

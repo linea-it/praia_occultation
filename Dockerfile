@@ -56,7 +56,7 @@ WORKDIR $APP_PATH
 # OBS. o Download demora bastante!
 RUN wget --no-verbose --show-progress \
 	--progress=bar:force:noscroll \ 
-	-o de435.bsp https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp
+	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp
 
 
 # Copia os arquivos do repositório para dentro da imagem
@@ -86,6 +86,10 @@ RUN cd ${APP_PATH}/src \
 	&& mv elimina /usr/local/bin/ \
 	&& cd ${APP_PATH}
 
+RUN cd ${APP_PATH}/src \
+	&& gfortran-7 PRAIA_occ_star_search_12.f -o PRAIA_occ_star_search_12 \
+	&& mv PRAIA_occ_star_search_12 /usr/local/bin/ \
+	&& cd ${APP_PATH}
 
 # RUN cd ${APP_PATH}/basemap-1.1.0 \
 # 	&& python setup.py install
@@ -93,7 +97,6 @@ RUN cd ${APP_PATH}/src \
 # # Download Finals for astropy
 # COPY iers_table.py $APP_PATH
 # RUN ./iers_table.py
-
 
 # Criar o grupo des-brazil com o mesmo id usado no linea
 RUN groupadd --gid 10000 des-brazil

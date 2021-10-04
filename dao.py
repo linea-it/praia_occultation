@@ -6,6 +6,7 @@ from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
 import pandas as pd
+import os
 
 
 class Dao():
@@ -65,9 +66,6 @@ class Dao():
 
 class GaiaDao(Dao):
     def __init__(self):
-        # super(GaiaDao, self).__init__()
-
-        # self.tbl = self.get_table(tablename="dr2", schema="gaia")
         self.catalog = dict({
             "schema": "gaia",
             "tablename": "dr2",
@@ -98,7 +96,6 @@ class GaiaDao(Dao):
     def catalog_by_positions(self, positions, radius=0.15):
 
         try:
-            print("Abriu conexao")
 
             if self.catalog["schema"] is not None:
                 tablename = "%s.%s" % (
@@ -135,7 +132,7 @@ class GaiaDao(Dao):
             df_results = None
 
             # Agrupar clausulas em grupos para diminuir a quantidade de querys
-            for gpos in dao.chunks_positions(positions, self.POSITION_GROUP):
+            for gpos in self.chunks_positions(positions, self.POSITION_GROUP):
 
                 clauses = list()
 
@@ -171,22 +168,113 @@ class GaiaDao(Dao):
             # logger.error(e)
             raise e
 
+    def write_gaia_catalog(self, rows, filename):
 
-if __name__ == "__main__":
+        # Propriedades do GAIA http://vizier.u-strasbg.fr/viz-bin/VizieR-3?-source=I/345/gaia2&-out.add=_r
+        # RA_ICRS   = ra                     = 0
+        # e_RA_ICRS = ra_error               = 1
+        # DE_ICRS   = dec                    = 2
+        # e_DE_ICRS = dec_error              = 3
+        # Plx       = parallax               = 4
+        # pmRA      = pmra                   = 5
+        # e_pmRA    = pmra_error             = 6
+        # pmDE      = pmdec                  = 7
+        # e_pmDE    = pmdec_error            = 8
+        # Dup       = duplicated_source      = 9
+        # FG        = phot_g_mean_flux       = 10
+        # e_FG      = phot_g_mean_flux_error = 11
+        # Gmag      = phot_g_mean_mag        = 12
+        # Var       = phot_variable_flag     = 13
 
-    dao = GaiaDao()
+        app_path = os.environ.get("APP_PATH").rstrip('/')
+        data_dir = os.environ.get("DIR_DATA").rstrip('/')
 
-    print("Teste")
+        output = os.path.join(data_dir, filename)
+        out_link = os.path.join(app_path, filename)
 
-    import csv
+        magJ, magH, magK = 99.000, 99.000, 99.000
+        JD = 15.0 * 365.25 + 2451545
 
-    positions = list()
-    with open('/data/centers_deg.csv', 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            positions.append([row['ra'], row['dec']])
+        # filename = os.path.join(path, "gaia_catalog.cat")
+        with open(output, 'w') as fp:
+            for row in rows:
 
-    df_catalog = dao.catalog_by_positions(positions, radius=0.15)
+                # Converter os valores nulos para 0
+                for prop in row:
+                    if row[prop] is None or pd.isna(row[prop]):
+                        row[prop] = 0
 
-    print(df_catalog.shape[0])
-    print(df_catalog.head())
+                fp.write(" ".ljust(64))
+                fp.write(("%.3f" % row['phot_g_mean_mag']).rjust(6))
+                fp.write(" ".ljust(7))
+                fp.write(" " + ("%.3f" % magJ).rjust(6))
+                fp.write(" " + ("%.3f" % magH).rjust(6))
+                fp.write(" " + ("%.3f" % magK).rjust(6))
+                fp.write(" ".rjust(35))
+                fp.write(" " + ("%.3f" % (row["pmra"] / 1000.0)).rjust(7))
+                fp.write(" " + ("%.3f" % (row["pmdec"] / 1000.0)).rjust(7))
+                fp.write(" " + ("%.3f" %
+                         (row["pmra_error"] / 1000.0)).rjust(7))
+                fp.write(" " + ("%.3f" %
+                         (row["pmdec_error"] / 1000.0)).rjust(7))
+                fp.write(" ".rjust(71))
+                fp.write(" " + ("%.9f" % (row["ra"] / 15.0)).rjust(13))
+                fp.write(" " + ("%.9f" % row["dec"]).rjust(13))
+                fp.write(" ".ljust(24))
+                fp.write(("%.8f" % JD).rjust(16))
+                fp.write(" ".ljust(119))
+                fp.write("  " + ("%.3f" % (row["ra_error"] / 1000.0)).rjust(6))
+                fp.write("  " + ("%.3f" %
+                         (row["dec_error"] / 1000.0)).rjust(6))
+                fp.write("\n")
+
+            fp.close()
+
+        if os.path.exists(output):
+            # Altera permissão do arquivo para escrita do grupo
+            os.chmod(output, 0664)
+            # Cria um link simbolico no diretório app
+            os.symlink(output, out_link)
+
+            return output
+        else:
+            raise (Exception("Gaia Catalog file not generated. [%s]" % output))
+
+    def gaia_catalog_to_csv(self, df_catalog, filename):
+
+        app_path = os.environ.get("APP_PATH").rstrip('/')
+        data_dir = os.environ.get("DIR_DATA").rstrip('/')
+
+        output = os.path.join(data_dir, filename)
+        out_link = os.path.join(app_path, filename)
+
+        df_catalog.to_csv(output, index=False, sep=";")
+
+        if os.path.exists(output):
+            # Altera permissão do arquivo para escrita do grupo
+            os.chmod(output, 0664)
+            # Cria um link simbolico no diretório app
+            os.symlink(output, out_link)
+
+            return output
+        else:
+            raise (Exception("Gaia Catalog file not generated. [%s]" % output))
+
+# if __name__ == "__main__":
+
+#     dao = GaiaDao()
+
+#     print("Teste")
+
+#     import csv
+
+#     positions = list()
+#     with open('/data/centers_deg.csv', 'r') as csvfile:
+#         reader = csv.DictReader(csvfile)
+#         for row in reader:
+#             positions.append([row['ra'], row['dec']])
+
+#     df_catalog = dao.catalog_by_positions(positions, radius=0.15)
+
+#     print(df_catalog.shape[0])
+#     print(df_catalog.head().to_dict('records'))

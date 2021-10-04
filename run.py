@@ -8,6 +8,9 @@ import shutil
 from library import check_leapsec, check_bsp_planetary, check_bsp_object, clear_for_rerun
 from generate_dates import generate_dates_file
 from generate_ephemeris import generate_ephemeris, generate_positions, run_elimina, centers_positions_to_deg
+from search_candidates import praia_occ_input_file
+from dao import GaiaDao
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("name", help="Object name without spaces")
@@ -49,6 +52,18 @@ if __name__ == "__main__":
         positions_filename = "positions.txt"
         centers_filename = "centers.txt"
         centers_deg_filename = "centers_deg.txt"
+        gaia_cat_filename = "gaia_catalog.cat"
+        gaia_csv_filename = "gaia_catalog.csv"
+        search_input_filename = "praia_occ_star_search_12.dat"
+
+        # Outputs do PRAIA Occ Star Search,
+        # IMPORTANTE! esses filenames são HARDCODED na função praia_occ_input_file
+        stars_catalog_mini_filename = 'g4_micro_catalog_JOHNSTON_2018'
+        stars_catalog_xy_filename = 'g4_occ_catalog_JOHNSTON_2018'
+        stars_parameters_of_occultation_filename = 'g4_occ_data_JOHNSTON_2018'
+        stars_parameters_of_occultation_plot_filename = 'g4_occ_data_JOHNSTON_2018_table'
+
+        occultation_table_filename = 'occultation_table.csv'
 
         data_dir = os.environ.get("DIR_DATA").rstrip('/')
 
@@ -56,7 +71,14 @@ if __name__ == "__main__":
         # Util só no desenvolimento quando se roda varias vezes o mesmo job.
         clear_for_rerun(
             input_files=[bsp_object_filename],
-            output_files=[dates_filename, eph_filename, radec_filename, positions_filename, centers_filename, centers_deg_filename])
+            output_files=[
+                dates_filename, eph_filename, radec_filename,
+                positions_filename, centers_filename,
+                centers_deg_filename, gaia_cat_filename, gaia_csv_filename,
+                search_input_filename, stars_catalog_mini_filename,
+                stars_catalog_xy_filename, stars_parameters_of_occultation_filename,
+                stars_parameters_of_occultation_plot_filename, occultation_table_filename
+            ])
 
         # Checar o arquivo de leapserconds
         leap_sec = check_leapsec(leap_sec_filename)
@@ -103,8 +125,31 @@ if __name__ == "__main__":
         center_positions = centers_positions_to_deg(
             centers_file, centers_deg_filename)
 
-        # print(center_positions_deg)
-        # TODO: Para cada posição executar a query no banco de dados.
+        # Para cada posição executa a query no banco de dados.
+        dao = GaiaDao()
+        df_catalog = dao.catalog_by_positions(center_positions, radius=0.15)
+        # Cria um arquivo no formato especifico do praia_occ
+        gaia_cat = dao.write_gaia_catalog(
+            df_catalog.to_dict('records'),
+            gaia_cat_filename)
+
+        print("Gaia Cat: [%s]" % gaia_cat)
+
+        # Cria um arquivo csv do catalogo gaia.
+        gaia_csv = dao.gaia_catalog_to_csv(df_catalog, gaia_csv_filename)
+
+        print("Gaia CSV: [%s]" % gaia_csv)
+
+        # Run PRAIA OCC Star Search 12
+        # Criar arquivo .dat baseado no template.
+        search_input = praia_occ_input_file(
+            star_catalog=gaia_cat,
+            object_ephemeris=eph_file,
+            filename=search_input_filename
+        )
+
+        print(search_input)
+        # run_search_candidate_stars
 
     except Exception as e:
         print(e)
@@ -115,3 +160,4 @@ if __name__ == "__main__":
 
 # Exemplo da execução do comando
 # python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp
+# docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host linea/praiaoccultation:v2.0 bash

@@ -228,7 +228,6 @@ def centers_positions_to_deg(centers_file, centers_deg_filename):
                 radec = HMS2deg(ra_hms, dec_hms)
                 a_radec.append(radec)
 
-                print(a_radec)
                 writer.writerow({'ra': radec[0], 'dec': radec[1]})
 
     if os.path.exists(output):

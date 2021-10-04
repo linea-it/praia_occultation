@@ -28,7 +28,7 @@ RUN pip install --upgrade pip \
 	certifi==2018.10.15 \
 	pyOpenSSL==18.0.0 \
 	cffi==1.12 \
-	numpy==1.12.0 \
+	numpy==1.16.6 \
 	astropy==2.0.8 \
 	spiceypy==2.1.2 \
 	matplotlib==1.5.1 \
@@ -74,11 +74,11 @@ RUN cd ${APP_PATH}/src \
 	&& mv geradata /usr/local/bin/ \
 	&& cd ${APP_PATH}
 
-# Compilar o gerapositions usando gfortran-7, Importante se não for esta versão da erro!
-RUN cd ${APP_PATH}/src \
-	&& gfortran-7 gerapositions.f -o gerapositions \
-	&& mv gerapositions /usr/local/bin/ \
-	&& cd ${APP_PATH}
+# # Compilar o gerapositions usando gfortran-7, Importante se não for esta versão da erro!
+# RUN cd ${APP_PATH}/src \
+# 	&& gfortran-7 gerapositions.f -o gerapositions \
+# 	&& mv gerapositions /usr/local/bin/ \
+# 	&& cd ${APP_PATH}
 
 # Compilar o elimina.f usando gfortran-7, Importante se não for esta versão da erro!
 RUN cd ${APP_PATH}/src \

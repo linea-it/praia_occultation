@@ -8,7 +8,7 @@ import shutil
 from library import check_leapsec, check_bsp_planetary, check_bsp_object, clear_for_rerun
 from generate_dates import generate_dates_file
 from generate_ephemeris import generate_ephemeris, generate_positions, run_elimina, centers_positions_to_deg
-from search_candidates import praia_occ_input_file
+from search_candidates import search_candidates
 from dao import GaiaDao
 
 
@@ -54,14 +54,15 @@ if __name__ == "__main__":
         centers_deg_filename = "centers_deg.txt"
         gaia_cat_filename = "gaia_catalog.cat"
         gaia_csv_filename = "gaia_catalog.csv"
-        search_input_filename = "praia_occ_star_search_12.dat"
 
-        # Outputs do PRAIA Occ Star Search,
+        # Inputs/Outputs do PRAIA Occ Star Search,
         # IMPORTANTE! esses filenames são HARDCODED na função praia_occ_input_file
+        search_input_filename = "praia_occ_star_search_12.dat"
         stars_catalog_mini_filename = 'g4_micro_catalog_JOHNSTON_2018'
         stars_catalog_xy_filename = 'g4_occ_catalog_JOHNSTON_2018'
         stars_parameters_of_occultation_filename = 'g4_occ_data_JOHNSTON_2018'
         stars_parameters_of_occultation_plot_filename = 'g4_occ_data_JOHNSTON_2018_table'
+        praia_occ_log_filename = "praia_star_search.log"
 
         occultation_table_filename = 'occultation_table.csv'
 
@@ -77,7 +78,8 @@ if __name__ == "__main__":
                 centers_deg_filename, gaia_cat_filename, gaia_csv_filename,
                 search_input_filename, stars_catalog_mini_filename,
                 stars_catalog_xy_filename, stars_parameters_of_occultation_filename,
-                stars_parameters_of_occultation_plot_filename, occultation_table_filename
+                stars_parameters_of_occultation_plot_filename, occultation_table_filename,
+                praia_occ_log_filename
             ])
 
         # Checar o arquivo de leapserconds
@@ -142,14 +144,13 @@ if __name__ == "__main__":
 
         # Run PRAIA OCC Star Search 12
         # Criar arquivo .dat baseado no template.
-        search_input = praia_occ_input_file(
+        occultation_file = search_candidates(
             star_catalog=gaia_cat,
             object_ephemeris=eph_file,
-            filename=search_input_filename
+            filename=occultation_table_filename
         )
 
-        print(search_input)
-        # run_search_candidate_stars
+        print("Occultation CSV Table: [%s]" % occultation_file)
 
     except Exception as e:
         print(e)

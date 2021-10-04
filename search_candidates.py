@@ -1,14 +1,13 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 
-import subprocess
 import os
-import spiceypy as spice
-import math
-from library import HMS2deg
-import csv
-import numpy as np
+import subprocess
 from datetime import datetime
+
+import numpy as np
+
+from library import HMS2deg
 
 
 def praia_occ_input_file(star_catalog, object_ephemeris):

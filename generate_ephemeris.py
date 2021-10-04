@@ -1,29 +1,14 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 
-# import argparse
-# parser = argparse.ArgumentParser()
-# parser.add_argument("name", help="Object name")
-# parser.add_argument("dates_file", help="")
-# parser.add_argument("bsp_object", help="")
-# parser.add_argument("bsp_planets", help="")
-# parser.add_argument("filename", help="")
-# parser.add_argument("--leap_sec", default="naif0012.tls", help="")
-# parser.add_argument("--radec_filename", default="radec.txt", help="")
-# parser.add_argument("--positions_filename", default="positions.txt", help="")
-# parser.add_argument("--footprint", default="des-round17-poly.txt", help="File containing the coordinates of the footprint used in the position plot.")
-# parser.add_argument("--ecliptic_galactic", default="eclipticGalacticData.csv", help="File containing Ecliptic plane and Galactic plane.")
-
-
-# args = parser.parse_args()
-
-import subprocess
-import os
-import spiceypy as spice
-import math
-from library import HMS2deg
 import csv
-# from plot_orbit_In_sky import *
+import math
+import os
+import subprocess
+
+import spiceypy as spice
+
+from library import HMS2deg
 
 
 def findIDSPK(n, key):
@@ -239,83 +224,3 @@ def centers_positions_to_deg(centers_file, centers_deg_filename):
         return a_radec
     else:
         raise (Exception("Centers Deg file not generated. [%s]" % output))
-
-    # # ============ Generating ephemeris =============
-
-    # object_name = args.name
-    # dates_file = args.dates_file
-    # bsp_object = args.bsp_object
-    # bsp_planets = args.bsp_planets
-    # leap_sec = args.leap_sec
-    # footprint = args.footprint
-    # ecliptic_galactic = args.ecliptic_galactic
-
-    # result_filename = args.filename
-
-    # data_dir = os.environ.get("DIR_DATA")
-    # radec_filename = args.radec_filename
-    # positions_filename = args.positions_filename
-
-    # in_dates_file = os.path.join(data_dir, dates_file)
-    # in_bsp_object = os.path.join(data_dir, bsp_object)
-    # in_bsp_planets = os.path.join(data_dir, bsp_planets)
-    # in_leap_sec = os.path.join(data_dir, leap_sec)
-
-    # ephemeris = os.path.join(data_dir, result_filename)
-    # radec = os.path.join(data_dir, radec_filename)
-    # positions = os.path.join(data_dir, positions_filename)
-    # orbit_in_sky = os.path.join(data_dir, 'asteroid_orbit.png')
-
-    # if not os.path.exists(dates_file):
-    #     if os.path.exists(in_dates_file):
-    #         os.symlink(in_dates_file, dates_file)
-    #     else:
-    #         raise(Exception("Missing dates file"))
-
-    # if not os.path.exists(bsp_object):
-    #     if os.path.exists(in_bsp_object):
-    #         os.symlink(in_bsp_object, bsp_object)
-    #     else:
-    #         raise(Exception("Missing Object bsp file"))
-
-    # if not os.path.exists(bsp_planets):
-    #     if os.path.exists(in_bsp_planets):
-    #         os.symlink(in_bsp_planets, bsp_planets)
-    #     else:
-    #         raise(Exception("Missing Planets bsp file"))
-
-    # if not os.path.exists(leap_sec):
-    #     if os.path.exists(in_leap_sec):
-    #         os.symlink(in_leap_sec, leap_sec)
-    #     else:
-    #         raise(Exception("Missing leap sec file"))
-
-    # try:
-    #     generate_ephemeris(dates_file, bsp_object, bsp_planets,
-    #                        leap_sec, ephemeris, radec)
-
-    #     # Clear inputs
-    #     os.unlink(dates_file)
-    #     os.unlink(bsp_object)
-    #     os.unlink(bsp_planets)
-    #     os.unlink(leap_sec)
-
-    #     if not os.path.exists(ephemeris):
-    #         exit(1)
-
-    #     # Generate Positions
-    #     generatePositions(ephemeris, positions)
-
-    #     # Gerar plot Orbit in Sky
-    #     plotOrbit(object_name, footprint, ecliptic_galactic,
-    #               positions, orbit_in_sky)
-    #     os.chmod(orbit_in_sky, 0776)
-
-    #     if not os.path.exists(positions):
-    #         exit(2)
-
-    #     exit(0)
-
-    # except Exception as e:
-    #     raise(e)
-    #     exit(1)

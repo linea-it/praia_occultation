@@ -2,14 +2,13 @@
 # -*- coding: utf-8 -*-
 import traceback
 import os
-import subprocess
 import argparse
-import shutil
 from library import check_leapsec, check_bsp_planetary, check_bsp_object, clear_for_rerun
 from generate_dates import generate_dates_file
-from generate_ephemeris import generate_ephemeris, generate_positions, run_elimina, centers_positions_to_deg
+from generate_ephemeris import generate_ephemeris, run_elimina, centers_positions_to_deg
 from search_candidates import search_candidates
-from dao import GaiaDao
+from dao import GaiaDao, MissingDBURIException
+from datetime import datetime
 
 
 parser = argparse.ArgumentParser()
@@ -26,14 +25,22 @@ parser.add_argument("--bsp_planetary", default="de435.bsp",
 parser.add_argument("--bsp_object", default=None,
                     help="Name of the Asteroid BSP file, it must be in the directory /data. example Eris.bsp. default <name>.bsp")
 
-# parser.add_argument("--filename", default="dates.txt",
-#                     help="Output file name. default is dates.txt")
+
 args = parser.parse_args()
 
 
 if __name__ == "__main__":
 
+    t0 = datetime.now()
+
     try:
+        # Verifica Variavel de Ambiente com a URI de acesso ao banco de dados.
+        try:
+            db_uri = os.environ['DB_URI']
+        except Exception as e:
+            raise MissingDBURIException(
+                "Required environment variable with URI to access the database where GAIA DR2 is."
+                "example DB_URI=postgresql+psycopg2://USER:PASS@HOST:PORT/DB_NAME")
 
         # Tratar os Parametros de entrada
         name = args.name.replace(' ', '').replace('_', '')
@@ -46,6 +53,7 @@ if __name__ == "__main__":
         if bsp_object_filename is None:
             bsp_object_filename = "%s.bsp" % name
 
+        # Seta os nomes de arquivos que serão gerados.
         dates_filename = "dates.txt"
         eph_filename = "%s.eph" % name
         radec_filename = "radec.txt"
@@ -54,6 +62,7 @@ if __name__ == "__main__":
         centers_deg_filename = "centers_deg.txt"
         gaia_cat_filename = "gaia_catalog.cat"
         gaia_csv_filename = "gaia_catalog.csv"
+        occultation_table_filename = 'occultation_table.csv'
 
         # Inputs/Outputs do PRAIA Occ Star Search,
         # IMPORTANTE! esses filenames são HARDCODED na função praia_occ_input_file
@@ -64,12 +73,11 @@ if __name__ == "__main__":
         stars_parameters_of_occultation_plot_filename = 'g4_occ_data_JOHNSTON_2018_table'
         praia_occ_log_filename = "praia_star_search.log"
 
-        occultation_table_filename = 'occultation_table.csv'
-
+        # Diretorio de Dados dentro do container.
         data_dir = os.environ.get("DIR_DATA").rstrip('/')
 
         # Limpa o diretório app e data removendo os links simbolicos e resultados
-        # Util só no desenvolimento quando se roda varias vezes o mesmo job.
+        # Util quando se roda varias vezes o mesmo job.
         clear_for_rerun(
             input_files=[bsp_object_filename],
             output_files=[
@@ -156,9 +164,15 @@ if __name__ == "__main__":
         print(e)
         traceback.print_exc()
 
+    except MissingDBURIException as e:
+        print(e)
+
     finally:
-        print("Terminou!")
+        t1 = datetime.now()
+        td = t1 - t0
+        print("Predict Occultation Done in %s" % td)
 
 # Exemplo da execução do comando
 # python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp
-# docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host linea/praiaoccultation:v2.0 bash
+# docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 bash
+# docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp

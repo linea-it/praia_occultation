@@ -2,11 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import os
+
+import pandas as pd
 from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
-import pandas as pd
-import os
+
+
+class MissingDBURIException(Exception):
+    pass
 
 
 class Dao():
@@ -16,10 +21,17 @@ class Dao():
     def get_db_uri(self):
 
         # DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
-        db_uri = "postgresql+psycopg2://%s:%s@%s:%s/%s" % (
-            "postgres", "postgres", "172.18.0.2", "5432", "tno_v2")
+        # db_uri = "postgresql+psycopg2://%s:%s@%s:%s/%s" % (
+        #     "postgres", "postgres", "172.18.0.2", "5432", "tno_v2")
 
-        return db_uri
+        # DB_URI=postgresql+psycopg2://USER:PASS@HOST:PORT/DB_NAME
+        try:
+            db_uri = os.environ['DB_URI']
+            return db_uri
+        except:
+            raise MissingDBURIException(
+                "Required environment variable with URI to access the database where GAIA DR2 is."
+                "example DB_URI=postgresql+psycopg2://USER:PASS@HOST:PORT/DB_NAME")
 
     def get_db_engine(self):
 

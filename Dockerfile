@@ -20,14 +20,15 @@ RUN apt-get update && apt-get install -y \
 	vim \
 	&& rm -rf /var/lib/apt/lists/*
 
-# RUN pip install --upgrade pip \
-RUN pip install \
+# RUN pip install \
+RUN pip install --upgrade pip \
 	setuptools \
 	wheel \
 	six==1.11.0 \
 	certifi==2018.10.15 \
 	pyOpenSSL==18.0.0 \
-	cffi==1.12 \	
+	cffi==1.12 \
+	numpy==1.12.0 \
 	astropy==2.0.8 \
 	spiceypy==2.1.2 \
 	matplotlib==1.5.1 \
@@ -41,7 +42,8 @@ RUN pip install \
 	pandas==0.24.2 \
 	&& pip freeze
 
-RUN mkdir $APP_PATH
+RUN mkdir $APP_PATH \
+	&& chmod 775 $APP_PATH
 
 WORKDIR $APP_PATH
 
@@ -102,7 +104,7 @@ RUN useradd --no-create-home --gid des-brazil --uid 1000 appuser
 # Adiciona o usuario Glauber porque quando o HTCondor roda está imagem é com o usuario que submeteu.
 RUN useradd --no-create-home --gid des-brazil --uid 10139 glauber.costa
 
-RUN chmod 777 /app
+
 
 # Troca o usuario para um que não é ROOT!
 USER appuser

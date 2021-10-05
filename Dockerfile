@@ -112,3 +112,4 @@ RUN useradd --no-create-home --gid des-brazil --uid 10139 glauber.costa
 # Troca o usuario para um que não é ROOT!
 USER appuser
 
+ENV DIR_DATA=/tmp/data

@@ -52,12 +52,14 @@ if __name__ == "__main__":
             # Altera a variavel de ambiente DIR_DATA com o valor /app/data.
             # é necessário criar este link por que os paths para os arquivos
             # não podem ser muito grande limite de 50 caracteres para o PRAIA_OCC.
-            if os.path.exists("/app/data") and os.path.islink("/app/data"):
-                # Se o link já existir remove.
-                os.unlink("/app/data")
+            # if os.path.exists("/app/data") and os.path.islink("/app/data"):
+            #     # Se o link já existir remove.
+            #     os.unlink("/app/data")
 
-            os.symlink(args.path, "/app/data")
-            os.environ["DIR_DATA"] = "/app/data"
+            # os.symlink(args.path, "/app/data")
+            # os.environ["DIR_DATA"] = "/app/data"
+
+            os.symlink(args.path, os.environ.get("DIR_DATA"))
 
         if args.path is None and os.path.exists(os.environ.get("DIR_DATA")) is False:
             # Se não for passado o parametro --path e o diretório /data não existir o programa para a execução.

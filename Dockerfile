@@ -3,7 +3,7 @@ FROM python:2.7.17
 MAINTAINER Glauber Costa Vila Verde <glauber.vila.verde@gmail.com>
 
 ENV APP_PATH=/app
-ENV DIR_DATA=/data
+ENV DIR_DATA=/tmp/data
 
 RUN apt-get update && apt-get install -y \
 	gcc \
@@ -43,14 +43,9 @@ RUN pip install --upgrade pip \
 	&& pip freeze
 
 RUN mkdir $APP_PATH \
-	&& chmod 775 $APP_PATH
+	&& chmod 777 $APP_PATH
 
 WORKDIR $APP_PATH
-
-# # Download Leap Second
-# RUN wget --no-verbose --show-progress \
-# 	--progress=bar:force:noscroll \ 
-# 	-o naif0012.tls https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
 
 # Download da BSP planetary
 # OBS. o Download demora bastante!
@@ -58,14 +53,14 @@ RUN wget --no-verbose --show-progress \
 	--progress=bar:force:noscroll \ 
 	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp
 
+# Download Leap Second
+RUN wget --no-verbose --show-progress \
+        --progress=bar:force:noscroll \
+        https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
+
 
 # Copia os arquivos do repositório para dentro da imagem
 COPY . $APP_PATH
-
-# # Unzip BSP Planetary
-# RUN zip -F de435.bsp.zip --out single-archive.zip \
-# 	&& unzip de435.bsp.zip \
-# 	&& rm de435.bsp.zip single-archive.zip
 
 # Compilar o geradata usando gfortran-7, Importante se não for esta versão da erro!
 RUN cd ${APP_PATH}/src \
@@ -112,4 +107,3 @@ RUN useradd --no-create-home --gid des-brazil --uid 10139 glauber.costa
 # Troca o usuario para um que não é ROOT!
 USER appuser
 
-ENV DIR_DATA=/tmp/data

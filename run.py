@@ -36,7 +36,18 @@ if __name__ == "__main__":
 
     t0 = datetime.now()
 
+    # Verifica o path onde o programa está sendo executado
+    app_path = os.environ.get("APP_PATH")
+    original_cwd = os.getcwd()
+    print("Current Path: %s" % original_cwd)
+
+    if original_cwd != app_path:
+        print("Changing the work directory")
+        os.chdir(app_path)
+        print("Current Path: %s" % os.getcwd())
+
     try:
+
         # Verifica Variavel de Ambiente com a URI de acesso ao banco de dados.
         try:
             db_uri = os.environ['DB_URI']
@@ -193,6 +204,10 @@ if __name__ == "__main__":
         print(e)
 
     finally:
+
+        # Volta para o diretório original
+        os.chdir(original_cwd)
+
         t1 = datetime.now()
         td = t1 - t0
         print("Predict Occultation Done in %s" % td)

@@ -84,6 +84,8 @@ def run_praia_occ(input, ):
         )
         p.communicate()
 
+    os.chmod(log, 0664)
+
 
 def fix_table(filename):
 
@@ -212,6 +214,12 @@ def search_candidates(star_catalog, object_ephemeris, filename):
             os.chmod(output, 0664)
             # Cria um link simbolico no diretório app
             os.symlink(output, out_link)
+
+            # PRAIA OCC gera varios arquivos de saida alterar a permissão desses arquivos.
+            files = ["g4_micro_catalog_JOHNSTON_2018", "g4_occ_catalog_JOHNSTON_2018",
+                     "g4_occ_data_JOHNSTON_2018", "g4_occ_data_JOHNSTON_2018_table"]
+            for f in files:
+                os.chmod(os.path.join(data_dir, f), 0664)
 
             return output
         else:

@@ -205,7 +205,8 @@ def centers_positions_to_deg(centers_file, centers_deg_filename):
 
         with open(output, 'w') as csvfile:
             fieldnames = ['ra', 'dec']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer = csv.DictWriter(
+                csvfile, fieldnames=fieldnames, delimiter=";")
             writer.writeheader()
 
             for line in f:

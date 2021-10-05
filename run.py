@@ -24,6 +24,9 @@ parser.add_argument("--bsp_planetary", default="de435.bsp",
                     help="Name of the BSP Planetary file, it must be in the directory /data. example de435.bsp")
 parser.add_argument("--bsp_object", default=None,
                     help="Name of the Asteroid BSP file, it must be in the directory /data. example Eris.bsp. default <name>.bsp")
+parser.add_argument("-p", "--path", default=None,
+                    required=False,
+                    help="Path where the inputs are and where the outputs will be. must be the path as it is mounted on the volume, should be used when it is not possible to mount the volume as /data. example the inputs are in /archive/asteroids/Eris and this path is mounted inside the container the parameter --path must have this value --path /archive/asteroids/Eris, the program will create a link from this path to /data.")
 
 
 args = parser.parse_args()
@@ -42,6 +45,29 @@ if __name__ == "__main__":
                 "Required environment variable with URI to access the database where GAIA DR2 is."
                 "example DB_URI=postgresql+psycopg2://USER:PASS@HOST:PORT/DB_NAME")
 
+        # Tratar o diretório dos inputs
+        if args.path is not None and os.path.exists(os.environ.get("DIR_DATA")) is False:
+            # Se for passado o parametro --path e o diretório /data nao existir
+            # Cria um link simbolico do --path para /app/data (não pode ser /data por causa de permissão.)
+            # Altera a variavel de ambiente DIR_DATA com o valor /app/data.
+            # é necessário criar este link por que os paths para os arquivos
+            # não podem ser muito grande limite de 50 caracteres para o PRAIA_OCC.
+            if os.path.exists("/app/data") and os.path.islink("/app/data"):
+                # Se o link já existir remove.
+                os.unlink("/app/data")
+
+            os.symlink(args.path, "/app/data")
+            os.environ["DIR_DATA"] = "/app/data"
+
+        if args.path is None and os.path.exists(os.environ.get("DIR_DATA")) is False:
+            # Se não for passado o parametro --path e o diretório /data não existir o programa para a execução.
+            raise Exception(
+                "No data directory was found. use the volume mounting the data in the /data directory or run the run.py script with parameter --path in which case the directory passed as parameter must be a mounted volume.")
+
+        # Diretorio de Dados dentro do container.
+        data_dir = os.environ.get("DIR_DATA").rstrip('/')
+        print("DATA DIR: [%s]" % data_dir)
+
         # Tratar os Parametros de entrada
         name = args.name.replace(' ', '').replace('_', '')
         start_date = args.start_date
@@ -59,7 +85,7 @@ if __name__ == "__main__":
         radec_filename = "radec.txt"
         positions_filename = "positions.txt"
         centers_filename = "centers.txt"
-        centers_deg_filename = "centers_deg.txt"
+        centers_deg_filename = "centers_deg.csv"
         gaia_cat_filename = "gaia_catalog.cat"
         gaia_csv_filename = "gaia_catalog.csv"
         occultation_table_filename = 'occultation_table.csv'
@@ -72,9 +98,6 @@ if __name__ == "__main__":
         stars_parameters_of_occultation_filename = 'g4_occ_data_JOHNSTON_2018'
         stars_parameters_of_occultation_plot_filename = 'g4_occ_data_JOHNSTON_2018_table'
         praia_occ_log_filename = "praia_star_search.log"
-
-        # Diretorio de Dados dentro do container.
-        data_dir = os.environ.get("DIR_DATA").rstrip('/')
 
         # Limpa o diretório app e data removendo os links simbolicos e resultados
         # Util quando se roda varias vezes o mesmo job.
@@ -176,3 +199,4 @@ if __name__ == "__main__":
 # python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp
 # docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 bash
 # docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp
+# docker run -it --rm --volume /home/glauber/linea/1999RB216:/home/glauber/linea/1999RB216 --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp --path /home/glauber/linea/1999RB216

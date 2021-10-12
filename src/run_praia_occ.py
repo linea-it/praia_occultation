@@ -9,7 +9,7 @@ from generate_ephemeris import generate_ephemeris, run_elimina, centers_position
 from search_candidates import search_candidates
 from dao import GaiaDao, MissingDBURIException
 from datetime import datetime
-
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("name", help="Object name without spaces")
@@ -29,10 +29,132 @@ parser.add_argument("-p", "--path", default=None,
                     help="Path where the inputs are and where the outputs will be. must be the path as it is mounted on the volume, should be used when it is not possible to mount the volume as /data. example the inputs are in /archive/asteroids/Eris and this path is mounted inside the container the parameter --path must have this value --path /archive/asteroids/Eris, the program will create a link from this path to /data.")
 
 
-args = parser.parse_args()
+def start_praia_occ(
+        name, start_date, final_date, step,
+        leap_sec_filename, bsp_planetary_filename,
+        bsp_object_filename):
+
+    log_file = os.path.join(os.environ.get("DIR_DATA"), "praia_occ.log")
+
+    orig_stdout = sys.stdout
+    f = open(log_file, 'w')
+    sys.stdout = f
+
+    # Seta os nomes de arquivos que serão gerados.
+    dates_filename = "dates.txt"
+    eph_filename = "%s.eph" % name
+    radec_filename = "radec.txt"
+    positions_filename = "positions.txt"
+    centers_filename = "centers.txt"
+    centers_deg_filename = "centers_deg.csv"
+    gaia_cat_filename = "gaia_catalog.cat"
+    gaia_csv_filename = "gaia_catalog.csv"
+    occultation_table_filename = 'occultation_table.csv'
+    if bsp_object_filename is None:
+        bsp_object_filename = "%s.bsp" % name
+
+    # Inputs/Outputs do PRAIA Occ Star Search,
+    # IMPORTANTE! esses filenames são HARDCODED na função praia_occ_input_file
+    search_input_filename = "praia_occ_star_search_12.dat"
+    stars_catalog_mini_filename = 'g4_micro_catalog_JOHNSTON_2018'
+    stars_catalog_xy_filename = 'g4_occ_catalog_JOHNSTON_2018'
+    stars_parameters_of_occultation_filename = 'g4_occ_data_JOHNSTON_2018'
+    stars_parameters_of_occultation_plot_filename = 'g4_occ_data_JOHNSTON_2018_table'
+    praia_occ_log_filename = "praia_star_search.log"
+
+    # Limpa o diretório app e data removendo os links simbolicos e resultados
+    # Util quando se roda varias vezes o mesmo job.
+    clear_for_rerun(
+        input_files=[bsp_object_filename],
+        output_files=[
+            dates_filename, eph_filename, radec_filename,
+            positions_filename, centers_filename,
+            centers_deg_filename, gaia_cat_filename, gaia_csv_filename,
+            search_input_filename, stars_catalog_mini_filename,
+            stars_catalog_xy_filename, stars_parameters_of_occultation_filename,
+            stars_parameters_of_occultation_plot_filename, occultation_table_filename,
+            praia_occ_log_filename
+        ])
+
+    # Checar o arquivo de leapserconds
+    leap_sec = check_leapsec(leap_sec_filename)
+    print("Leap Second: [%s]" % leap_sec_filename)
+
+    # Checa o arquivo bsp_planetary
+    bsp_planetary = check_bsp_planetary(bsp_planetary_filename)
+    print("BSP Planetary: [%s]" % bsp_planetary)
+
+    # Checa o arquivo bsp_object
+    bsp_object = check_bsp_object(bsp_object_filename)
+    print("BSP Object: [%s]" % bsp_object)
+
+    # Gerar arquivo de datas
+    dates_file = generate_dates_file(
+        start_date, final_date, step, dates_filename)
+    print("Dates File: [%s]" % dates_file)
+
+    # Gerar a ephemeris
+    eph_file = generate_ephemeris(
+        dates_file, bsp_object, bsp_planetary,
+        leap_sec, eph_filename, radec_filename)
+
+    print("Ephemeris File: [%s]" % eph_file)
+
+    # # TODO: Verificar se é mesmo necessário!
+    # # Gerar aquivo de posições
+    # positions_file = generate_positions(
+    #     eph_filename, positions_filename)
+
+    # print("Positions File: [%s]" % positions_file)
+
+    # TODO: Gerar plot Orbit in Sky se for necessário
+    # plotOrbit(object_name, footprint, ecliptic_galactic,
+    #         positions, orbit_in_sky)
+    # os.chmod(orbit_in_sky, 0776)
+
+    # Executar o Elimina e gerar o Centers.txt
+    centers_file = run_elimina(eph_filename, centers_filename)
+    print("Centers File: [%s]" % centers_file)
+
+    # Converter as posições do Centers.txt para graus
+    # gera um arquivo com as posições convertidas, mas o retorno da função é um array.
+    center_positions = centers_positions_to_deg(
+        centers_file, centers_deg_filename)
+
+    # Para cada posição executa a query no banco de dados.
+    dao = GaiaDao()
+    df_catalog = dao.catalog_by_positions(center_positions, radius=0.15)
+    # Cria um arquivo no formato especifico do praia_occ
+    gaia_cat = dao.write_gaia_catalog(
+        df_catalog.to_dict('records'),
+        gaia_cat_filename)
+
+    print("Gaia Cat: [%s]" % gaia_cat)
+
+    # Cria um arquivo csv do catalogo gaia.
+    gaia_csv = dao.gaia_catalog_to_csv(df_catalog, gaia_csv_filename)
+
+    print("Gaia CSV: [%s]" % gaia_csv)
+
+    # Run PRAIA OCC Star Search 12
+    # Criar arquivo .dat baseado no template.
+    occultation_file = search_candidates(
+        star_catalog=gaia_cat,
+        object_ephemeris=eph_file,
+        filename=occultation_table_filename
+    )
+
+    print("Occultation CSV Table: [%s]" % occultation_file)
+
+    sys.stdout = orig_stdout
+    f.close()
+
+    return occultation_file
 
 
 if __name__ == "__main__":
+
+    args = parser.parse_args()
 
     t0 = datetime.now()
 
@@ -82,112 +204,118 @@ if __name__ == "__main__":
         leap_sec_filename = args.leap_sec
         bsp_planetary_filename = args.bsp_planetary
         bsp_object_filename = args.bsp_object
-        if bsp_object_filename is None:
-            bsp_object_filename = "%s.bsp" % name
 
-        # Seta os nomes de arquivos que serão gerados.
-        dates_filename = "dates.txt"
-        eph_filename = "%s.eph" % name
-        radec_filename = "radec.txt"
-        positions_filename = "positions.txt"
-        centers_filename = "centers.txt"
-        centers_deg_filename = "centers_deg.csv"
-        gaia_cat_filename = "gaia_catalog.cat"
-        gaia_csv_filename = "gaia_catalog.csv"
-        occultation_table_filename = 'occultation_table.csv'
+        occultation_file = start_praia_occ(
+            name, start_date, final_date, step,
+            leap_sec_filename, bsp_planetary_filename,
+            bsp_object_filename)
 
-        # Inputs/Outputs do PRAIA Occ Star Search,
-        # IMPORTANTE! esses filenames são HARDCODED na função praia_occ_input_file
-        search_input_filename = "praia_occ_star_search_12.dat"
-        stars_catalog_mini_filename = 'g4_micro_catalog_JOHNSTON_2018'
-        stars_catalog_xy_filename = 'g4_occ_catalog_JOHNSTON_2018'
-        stars_parameters_of_occultation_filename = 'g4_occ_data_JOHNSTON_2018'
-        stars_parameters_of_occultation_plot_filename = 'g4_occ_data_JOHNSTON_2018_table'
-        praia_occ_log_filename = "praia_star_search.log"
+        # if bsp_object_filename is None:
+        #     bsp_object_filename = "%s.bsp" % name
 
-        # Limpa o diretório app e data removendo os links simbolicos e resultados
-        # Util quando se roda varias vezes o mesmo job.
-        clear_for_rerun(
-            input_files=[bsp_object_filename],
-            output_files=[
-                dates_filename, eph_filename, radec_filename,
-                positions_filename, centers_filename,
-                centers_deg_filename, gaia_cat_filename, gaia_csv_filename,
-                search_input_filename, stars_catalog_mini_filename,
-                stars_catalog_xy_filename, stars_parameters_of_occultation_filename,
-                stars_parameters_of_occultation_plot_filename, occultation_table_filename,
-                praia_occ_log_filename
-            ])
+        # # Seta os nomes de arquivos que serão gerados.
+        # dates_filename = "dates.txt"
+        # eph_filename = "%s.eph" % name
+        # radec_filename = "radec.txt"
+        # positions_filename = "positions.txt"
+        # centers_filename = "centers.txt"
+        # centers_deg_filename = "centers_deg.csv"
+        # gaia_cat_filename = "gaia_catalog.cat"
+        # gaia_csv_filename = "gaia_catalog.csv"
+        # occultation_table_filename = 'occultation_table.csv'
 
-        # Checar o arquivo de leapserconds
-        leap_sec = check_leapsec(leap_sec_filename)
-        print("Leap Second: [%s]" % leap_sec_filename)
+        # # Inputs/Outputs do PRAIA Occ Star Search,
+        # # IMPORTANTE! esses filenames são HARDCODED na função praia_occ_input_file
+        # search_input_filename = "praia_occ_star_search_12.dat"
+        # stars_catalog_mini_filename = 'g4_micro_catalog_JOHNSTON_2018'
+        # stars_catalog_xy_filename = 'g4_occ_catalog_JOHNSTON_2018'
+        # stars_parameters_of_occultation_filename = 'g4_occ_data_JOHNSTON_2018'
+        # stars_parameters_of_occultation_plot_filename = 'g4_occ_data_JOHNSTON_2018_table'
+        # praia_occ_log_filename = "praia_star_search.log"
 
-        # Checa o arquivo bsp_planetary
-        bsp_planetary = check_bsp_planetary(bsp_planetary_filename)
-        print("BSP Planetary: [%s]" % bsp_planetary)
+        # # Limpa o diretório app e data removendo os links simbolicos e resultados
+        # # Util quando se roda varias vezes o mesmo job.
+        # clear_for_rerun(
+        #     input_files=[bsp_object_filename],
+        #     output_files=[
+        #         dates_filename, eph_filename, radec_filename,
+        #         positions_filename, centers_filename,
+        #         centers_deg_filename, gaia_cat_filename, gaia_csv_filename,
+        #         search_input_filename, stars_catalog_mini_filename,
+        #         stars_catalog_xy_filename, stars_parameters_of_occultation_filename,
+        #         stars_parameters_of_occultation_plot_filename, occultation_table_filename,
+        #         praia_occ_log_filename
+        #     ])
 
-        # Checa o arquivo bsp_object
-        bsp_object = check_bsp_object(bsp_object_filename)
-        print("BSP Object: [%s]" % bsp_object)
+        # # Checar o arquivo de leapserconds
+        # leap_sec = check_leapsec(leap_sec_filename)
+        # print("Leap Second: [%s]" % leap_sec_filename)
 
-        # Gerar arquivo de datas
-        dates_file = generate_dates_file(
-            start_date, final_date, step, dates_filename)
-        print("Dates File: [%s]" % dates_file)
+        # # Checa o arquivo bsp_planetary
+        # bsp_planetary = check_bsp_planetary(bsp_planetary_filename)
+        # print("BSP Planetary: [%s]" % bsp_planetary)
 
-        # Gerar a ephemeris
-        eph_file = generate_ephemeris(
-            dates_file, bsp_object, bsp_planetary,
-            leap_sec, eph_filename, radec_filename)
+        # # Checa o arquivo bsp_object
+        # bsp_object = check_bsp_object(bsp_object_filename)
+        # print("BSP Object: [%s]" % bsp_object)
 
-        print("Ephemeris File: [%s]" % eph_file)
+        # # Gerar arquivo de datas
+        # dates_file = generate_dates_file(
+        #     start_date, final_date, step, dates_filename)
+        # print("Dates File: [%s]" % dates_file)
 
-        # # TODO: Verificar se é mesmo necessário!
-        # # Gerar aquivo de posições
-        # positions_file = generate_positions(
-        #     eph_filename, positions_filename)
+        # # Gerar a ephemeris
+        # eph_file = generate_ephemeris(
+        #     dates_file, bsp_object, bsp_planetary,
+        #     leap_sec, eph_filename, radec_filename)
 
-        # print("Positions File: [%s]" % positions_file)
+        # print("Ephemeris File: [%s]" % eph_file)
 
-        # TODO: Gerar plot Orbit in Sky se for necessário
-        # plotOrbit(object_name, footprint, ecliptic_galactic,
-        #         positions, orbit_in_sky)
-        # os.chmod(orbit_in_sky, 0776)
+        # # # TODO: Verificar se é mesmo necessário!
+        # # # Gerar aquivo de posições
+        # # positions_file = generate_positions(
+        # #     eph_filename, positions_filename)
 
-        # Executar o Elimina e gerar o Centers.txt
-        centers_file = run_elimina(eph_filename, centers_filename)
-        print("Centers File: [%s]" % centers_file)
+        # # print("Positions File: [%s]" % positions_file)
 
-        # Converter as posições do Centers.txt para graus
-        # gera um arquivo com as posições convertidas, mas o retorno da função é um array.
-        center_positions = centers_positions_to_deg(
-            centers_file, centers_deg_filename)
+        # # TODO: Gerar plot Orbit in Sky se for necessário
+        # # plotOrbit(object_name, footprint, ecliptic_galactic,
+        # #         positions, orbit_in_sky)
+        # # os.chmod(orbit_in_sky, 0776)
 
-        # Para cada posição executa a query no banco de dados.
-        dao = GaiaDao()
-        df_catalog = dao.catalog_by_positions(center_positions, radius=0.15)
-        # Cria um arquivo no formato especifico do praia_occ
-        gaia_cat = dao.write_gaia_catalog(
-            df_catalog.to_dict('records'),
-            gaia_cat_filename)
+        # # Executar o Elimina e gerar o Centers.txt
+        # centers_file = run_elimina(eph_filename, centers_filename)
+        # print("Centers File: [%s]" % centers_file)
 
-        print("Gaia Cat: [%s]" % gaia_cat)
+        # # Converter as posições do Centers.txt para graus
+        # # gera um arquivo com as posições convertidas, mas o retorno da função é um array.
+        # center_positions = centers_positions_to_deg(
+        #     centers_file, centers_deg_filename)
 
-        # Cria um arquivo csv do catalogo gaia.
-        gaia_csv = dao.gaia_catalog_to_csv(df_catalog, gaia_csv_filename)
+        # # Para cada posição executa a query no banco de dados.
+        # dao = GaiaDao()
+        # df_catalog = dao.catalog_by_positions(center_positions, radius=0.15)
+        # # Cria um arquivo no formato especifico do praia_occ
+        # gaia_cat = dao.write_gaia_catalog(
+        #     df_catalog.to_dict('records'),
+        #     gaia_cat_filename)
 
-        print("Gaia CSV: [%s]" % gaia_csv)
+        # print("Gaia Cat: [%s]" % gaia_cat)
 
-        # Run PRAIA OCC Star Search 12
-        # Criar arquivo .dat baseado no template.
-        occultation_file = search_candidates(
-            star_catalog=gaia_cat,
-            object_ephemeris=eph_file,
-            filename=occultation_table_filename
-        )
+        # # Cria um arquivo csv do catalogo gaia.
+        # gaia_csv = dao.gaia_catalog_to_csv(df_catalog, gaia_csv_filename)
 
-        print("Occultation CSV Table: [%s]" % occultation_file)
+        # print("Gaia CSV: [%s]" % gaia_csv)
+
+        # # Run PRAIA OCC Star Search 12
+        # # Criar arquivo .dat baseado no template.
+        # occultation_file = search_candidates(
+        #     star_catalog=gaia_cat,
+        #     object_ephemeris=eph_file,
+        #     filename=occultation_table_filename
+        # )
+
+        # print("Occultation CSV Table: [%s]" % occultation_file)
 
     except Exception as e:
         print(e)

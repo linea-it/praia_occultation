@@ -249,6 +249,32 @@ def NIMAmanager(inputParametersFile, log_file):
     return result_files
 
 
+def start_nima():
+    # path para arquivo de inputs.
+    parametersFile = os.path.join(
+        os.environ.get("DIR_DATA"), "nima_input.txt")
+
+    # path para arquivo de log.
+    log_file = os.path.join(os.environ.get("DIR_DATA"), "nima.log")
+
+    orig_stdout = sys.stdout
+    f = open(log_file, 'w')
+    sys.stdout = f
+
+    start_time = datetime.now()
+
+    files = NIMAmanager(parametersFile, log_file=f)
+
+    end_time = datetime.now()
+
+    print("Duration: %s" % (end_time - start_time))
+
+    sys.stdout = orig_stdout
+    f.close()
+
+    return files
+
+
 if __name__ == "__main__":
 
     t0 = datetime.now()
@@ -278,29 +304,31 @@ if __name__ == "__main__":
             raise Exception("No data directory was found. use the volume mounting the data in the /data directory or run the run.py script with parameter --path in which case the directory passed as parameter must be a mounted volume.")
             exit(1)
 
-        # path para arquivo de inputs.
-        parametersFile = os.path.join(
-            os.environ.get("DIR_DATA"), "nima_input.txt")
-        # path para arquivo de log.
-        log_file = os.path.join(os.environ.get("DIR_DATA"), "nima.log")
+        files = start_nima()
+        # # path para arquivo de inputs.
+        # parametersFile = os.path.join(
+        #     os.environ.get("DIR_DATA"), "nima_input.txt")
 
-        orig_stdout = sys.stdout
-        f = open(log_file, 'w')
-        sys.stdout = f
+        # # path para arquivo de log.
+        # log_file = os.path.join(os.environ.get("DIR_DATA"), "nima.log")
 
-        start_time = datetime.now()
+        # orig_stdout = sys.stdout
+        # f = open(log_file, 'w')
+        # sys.stdout = f
 
-        files = NIMAmanager(parametersFile, log_file=f)
+        # start_time = datetime.now()
 
-        end_time = datetime.now()
+        # files = NIMAmanager(parametersFile, log_file=f)
 
-        print("Duration: %s" % (end_time - start_time))
+        # end_time = datetime.now()
 
-        sys.stdout = orig_stdout
-        f.close()
-        exit(0)
+        # print("Duration: %s" % (end_time - start_time))
 
-        print("Teste")
+        # sys.stdout = orig_stdout
+        # f.close()
+        # exit(0)
+
+        # print("Teste")
 
     except Exception as e:
         print(e)

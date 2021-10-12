@@ -132,6 +132,8 @@ RUN set -ex \
 	&& chmod -R g+w $APP_PATH/NIMAv7 \
 	&& cd $APP_PATH
 
+# Copia os scripts de usuario para pasta NIMAv7_user
+COPY ./nima_src/user_scripts $APP_PATH/NIMAv7/NIMAv7_user/
 
 # Copia os programas python para a pasta app
 COPY ./src $APP_PATH
@@ -144,6 +146,12 @@ RUN useradd --no-create-home --gid des-brazil --uid 1000 appuser
 
 # Adiciona o usuario Glauber porque quando o HTCondor roda está imagem é com o usuario que submeteu.
 RUN useradd --no-create-home --gid des-brazil --uid 10139 glauber.costa
+
+# Dar permissão na pasta do NIMA
+RUN chown -R appuser:des-brazil $APP_PATH/NIMAv7 \
+	&& chmod -R g+w $APP_PATH/NIMAv7/NIMAv7_user/ \
+	# Adiciona permissão de execução aos scripts
+	&& chmod +x $APP_PATH/NIMAv7/NIMAv7_user/*.sh
 
 # Troca o usuario para um que não é ROOT!
 USER appuser

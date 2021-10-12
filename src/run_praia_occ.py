@@ -58,18 +58,11 @@ if __name__ == "__main__":
 
         # Tratar o diretório dos inputs
         if args.path is not None and os.path.exists(os.environ.get("DIR_DATA")) is False:
-            # Se for passado o parametro --path e o diretório /data nao existir
-            # Cria um link simbolico do --path para /app/data (não pode ser /data por causa de permissão.)
-            # Altera a variavel de ambiente DIR_DATA com o valor /app/data.
+            # Se for passado o parametro --path e o diretório /tmp/data nao existir
+            # Cria um link simbolico do --path para /tmp/data (não pode ser /data por causa de permissão.)
+            # Altera a variavel de ambiente DIR_DATA com o valor /tmp/data.
             # é necessário criar este link por que os paths para os arquivos
             # não podem ser muito grande limite de 50 caracteres para o PRAIA_OCC.
-            # if os.path.exists("/app/data") and os.path.islink("/app/data"):
-            #     # Se o link já existir remove.
-            #     os.unlink("/app/data")
-
-            # os.symlink(args.path, "/app/data")
-            # os.environ["DIR_DATA"] = "/app/data"
-
             os.symlink(args.path, os.environ.get("DIR_DATA"))
 
         if args.path is None and os.path.exists(os.environ.get("DIR_DATA")) is False:
@@ -217,3 +210,6 @@ if __name__ == "__main__":
 # docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 bash
 # docker run -it --rm --volume /home/glauber/linea/1999RB216:/data --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp
 # docker run -it --rm --volume /home/glauber/linea/1999RB216:/home/glauber/linea/1999RB216 --volume $PWD:/app --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.0 python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp --path /home/glauber/linea/1999RB216
+
+
+# docker run -it --rm --volume /home/glauber/linea/1999RB216:/home/glauber/linea/1999RB216 --network host -e DB_URI=postgresql+psycopg2://postgres:postgres@172.18.0.2:5432/tno_v2 linea/praiaoccultation:v2.5 python run.py 1999RB216 2021-JAN-01 2022-JAN-01 600 --bsp_object 1999RB216.bsp --path /home/glauber/linea/1999RB216

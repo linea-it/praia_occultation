@@ -149,9 +149,12 @@ RUN useradd --no-create-home --gid des-brazil --uid 10139 glauber.costa
 
 # Dar permissão na pasta do NIMA
 RUN chown -R appuser:des-brazil $APP_PATH/NIMAv7 \
-	&& chmod -R g+w $APP_PATH/NIMAv7/NIMAv7_user/ \
+	&& chmod -R 775 $APP_PATH/NIMAv7/NIMAv7_user/ \
+	# Permissao de escrita nas pastas result e data
+	&& chmod -R 777 $APP_PATH/NIMAv7/NIMAv7_user/data \
+	&& chmod -R 777 $APP_PATH/NIMAv7/NIMAv7_user/results \
 	# Adiciona permissão de execução aos scripts
-	&& chmod +x $APP_PATH/NIMAv7/NIMAv7_user/*.sh
+	&& chmod 775 $APP_PATH/NIMAv7/NIMAv7_user/*.sh 
 
 # Troca o usuario para um que não é ROOT!
 USER appuser

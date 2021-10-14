@@ -74,6 +74,8 @@ if __name__ == "__main__":
 
         # Até aqui preparou o ambiente para a execução do Nima e Praia OCC em sequencia.
 
+        # TODO: VERIFICAR SE O Objeto tem posições do DES se não tiver a etapa do NIMA deve ser ignorada e a predição feita com o BSP do JPL
+
         # Executar o NIMA
         print("Running NIMAv7")
         files = start_nima()

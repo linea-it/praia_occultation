@@ -122,3 +122,90 @@ def clear_for_rerun(input_files, output_files):
             os.unlink(a)
         if os.path.exists(d):
             os.remove(d)
+
+
+def read_asteroid_json(asteroid_name):
+    import json
+    import os
+
+    path = os.environ.get("DIR_DATA").rstrip('/')
+    alias = asteroid_name.replace(' ', '').replace('_', '')
+    filename = "{}.json".format(alias)
+
+    filepath = os.path.join(path, filename)
+
+    if os.path.exists(filepath):
+        with open(filepath) as json_file:
+            data = json.load(json_file)
+            return data
+    else:
+        return dict({})
+
+
+def write_asteroid_json(asteroid_name, data):
+    import os
+    import json
+
+    path = os.environ.get("DIR_DATA").rstrip('/')
+    alias = asteroid_name.replace(' ', '').replace('_', '')
+    filename = "{}.json".format(alias)
+
+    filepath = os.path.join(path, filename)
+
+    with open(filepath, 'w') as json_file:
+        json.dump(data, json_file)
+
+
+def count_lines(filepath):
+    with open(filepath, 'r') as fp:
+        num_lines = sum(1 for line in fp if line.rstrip())
+        return num_lines
+
+
+def create_nima_input(name, number, period_end):
+
+    import os
+    from datetime import datetime, timedelta
+
+    path = os.environ.get("DIR_DATA").rstrip('/')
+    nima_input_file = os.path.join(path, "nima_input.txt")
+
+    # Path para arquivo template de input do NIMA
+    app_path = os.environ.get("APP_PATH")
+    template_file = os.path.join(app_path, "nima_input_template.txt")
+
+    with open(template_file) as file:
+        data = file.read()
+
+        # Substitui no template as tags {} pelo valor das variaveis.
+        # Parametro Asteroid Name
+        name = name.replace('_', '').replace(' ', '')
+        data = data.replace('{name}', name.ljust(66))
+
+        # Parametro Asteroid Number
+        if number is None or number == '-':
+            number = name
+        data = data.replace('{number}', number.ljust(66))
+
+        # Parametro Plot start e Plot end
+        # data = data.replace('{plot_start_date}', period_start.ljust(66))
+        # year = int(period_end.split('-')[0]) - 1
+        # data = data.replace('{plot_end_year}', str(year))
+        data = data.replace('{plot_end}', str(period_end).ljust(66))
+
+        # Parametro BSP start e BSP end
+        # data = data.replace('{bsp_start_date}', period_start.ljust(66))
+        # year = int(period_end.split('-')[0]) - 1
+        # data = data.replace('{bsp_end_year}', str(year))
+        data = data.replace('{bsp_end}', str(period_end).ljust(66))
+
+        # Parametro Ephem start e Ephem end
+        # data = data.replace('{ephem_start_date}', period_start.ljust(66))
+        # year = int(period_end.split('-')[0]) - 1
+        # data = data.replace('{ephem_end_year}', str(year))
+        data = data.replace('{ephem_end}', str(period_end).ljust(66))
+
+        with open(nima_input_file, 'w') as new_file:
+            new_file.write(data)
+
+        return nima_input_file

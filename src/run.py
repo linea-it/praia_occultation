@@ -9,7 +9,8 @@ import argparse
 from datetime import datetime, timedelta
 from run_nima import start_nima
 from run_praia_occ import start_praia_occ
-from library import read_asteroid_json, write_asteroid_json, count_lines, create_nima_input
+from library import read_asteroid_json, write_asteroid_json, count_lines, create_nima_input, get_periods, occ_table_to_df
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -146,12 +147,68 @@ if __name__ == "__main__":
 
         # ============== Executar o PRAIA OCC ==============
         praia_t0 = datetime.now()
-
         print("Running PRAIA OCC")
-        occultation_file = start_praia_occ(
-            name, str(start_date), str(final_date), step,
-            leap_sec_filename, bsp_planetary_filename, bsp_object_filename
-        )
+
+        # Cria um dataframe vazio para as ocultações
+        df_occ = pd.DataFrame(columns=[
+            "occultation_date", "ra_star_candidate", "dec_star_candidate", "ra_object", "dec_object",
+            "ca", "pa", "vel", "delta", "g", "j", "h", "k", "long", "loc_t", "off_ra", "off_de", "pm",
+            "ct", "f", "e_ra", "e_de", "pmra", "pmde"
+        ])
+
+        # ATENÇÃO: Bug intermitente!!!
+        # A solução de dividir os periodos em pedaços de 1 mes. resolve o problema de estouro de memória.
+        # MAS não funciona para todos os casos, objetos que estejam usando o BSP gerado pelo NIMA podem
+        # Apresentar erro no SPICE(COMMENTTOOLONG).
+        # Por isso a solução de periodos menores será utilizada só para objetos que não estejam usando o BSP do NIMA.
+        if 'filename' in nima_result:
+            # Para objetos que tenham BSP NIMA será executado o periodo completo da predição.
+            occultation_file = start_praia_occ(
+                name, str(start_date), str(final_date), step,
+                leap_sec_filename, bsp_planetary_filename, bsp_object_filename
+            )
+
+            if os.path.exists(occultation_file):
+                temp_df = occ_table_to_df(occultation_file)
+                temp_occ_count = temp_df.shape[0]
+                print("Period Start: %s End: %s Occ: %s" %
+                      (start_date, final_date, temp_occ_count))
+
+                df_occ = pd.concat(
+                    [df_occ, temp_df]).drop_duplicates().reset_index(drop=True)
+
+        else:
+            # Para Objetos que não estejam usando o BSP NIMA, será usada a estrategia de dividir os periodos.
+            # Divide o periodo em partes de 1 mes.
+            # A intenção é evitar errors por estouro de memória para objetos que estejam
+            # Em regioes com muitas estrelas.
+            dt_segments = get_periods(str(start_date), str(final_date))
+            # Executa a predição para cada periodo e acumula os resultados no df_occ
+            for dt_seg in dt_segments:
+                seg_start_dt = dt_seg[0]
+                seg_final_dt = dt_seg[1]
+
+                occultation_file = start_praia_occ(
+                    name, str(seg_start_dt), str(seg_final_dt), step,
+                    leap_sec_filename, bsp_planetary_filename, bsp_object_filename
+                )
+
+                if os.path.exists(occultation_file):
+                    temp_df = occ_table_to_df(occultation_file)
+
+                    temp_occ_count = temp_df.shape[0]
+
+                    if temp_occ_count > 0:
+                        df_occ = pd.concat([df_occ, temp_df]).drop_duplicates(
+                        ).reset_index(drop=True)
+
+                    print("Period Start: %s End: %s Occ: %s" %
+                          (seg_start_dt, seg_final_dt, temp_occ_count))
+
+        # Total de ocultações para o periodo todo.
+        occ_count = df_occ.shape[0]
+        # Cria um arquivo com todas as ocultaços do periodo.
+        df_occ.to_csv(occultation_file, index=False, header=True, sep=';')
 
         praia_t1 = datetime.now()
         praia_td = praia_t1 - praia_t0
@@ -160,14 +217,10 @@ if __name__ == "__main__":
         if os.path.exists(occultation_file):
             print("Occultation table created: [%s]" % occultation_file)
 
-            # Quantidade de predições.
-            # Subtrai 1 por que o arquivo mesmo vazio tem os Headers
-            count = count_lines(occultation_file) - 1
-
             praia_result = dict({
                 "filename": os.path.basename(occultation_file),
                 "size": os.path.getsize(occultation_file),
-                "count": count,
+                "count": occ_count,
                 "start_period": str(start_date),
                 "end_period": str(final_date),
                 "start": praia_t0.isoformat(),

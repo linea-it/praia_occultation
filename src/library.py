@@ -1,6 +1,7 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 import os
+import pandas as pd
 
 
 def check_leapsec(filename):
@@ -209,3 +210,48 @@ def create_nima_input(name, number, period_end):
             new_file.write(data)
 
         return nima_input_file
+
+
+def get_periods(start, end):
+    """[summary]
+
+    Args:
+        start (str): '2022-05-12'
+        end (str): '2022-08-06'
+    """
+
+    start = pd.Timestamp(start)
+    end = pd.Timestamp(end)
+
+    parts = list(pd.date_range(start, end, freq='M'))
+    # parts = [Timestamp('2018-02-28 00:00:00', freq='M'), Timestamp('2018-03-31 00:00:00', freq='M')]
+
+    if start != parts[0]:
+        parts.insert(0, start)
+    if end != parts[-1]:
+        parts.append(end)
+    parts[0] -= pd.Timedelta('1d')  # we add back one day later
+
+    pairs = zip(map(lambda d: d + pd.Timedelta('1d'), parts[:-1]), parts[1:])
+
+    pairs_str = list(
+        map(lambda t: [t[0].strftime('%Y-%m-%d'), t[1].strftime('%Y-%m-%d')], pairs))
+
+    return pairs_str
+
+
+def occ_table_to_df(filepath):
+
+    df = pd.read_csv(
+        filepath,
+        delimiter=";",
+        header=None,
+        skiprows=1,
+        names=[
+            "occultation_date", "ra_star_candidate", "dec_star_candidate", "ra_object", "dec_object",
+            "ca", "pa", "vel", "delta", "g", "j", "h", "k", "long", "loc_t", "off_ra", "off_de", "pm",
+            "ct", "f", "e_ra", "e_de", "pmra", "pmde"
+        ]
+    )
+
+    return df

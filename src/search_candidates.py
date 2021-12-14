@@ -8,6 +8,7 @@ from datetime import datetime
 import numpy as np
 
 from library import HMS2deg
+import warnings
 
 
 def praia_occ_input_file(star_catalog, object_ephemeris):
@@ -133,43 +134,46 @@ def ascii_to_csv(inputFile, outputFile):
         inputFile ([type]): [description]
         outputFile ([type]): [description]
     """
-    data = np.loadtxt(inputFile, skiprows=41, dtype=str, ndmin=2)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = np.loadtxt(inputFile, skiprows=41, dtype=str, ndmin=2)
 
-    nRows, nCols = data.shape
+        nRows, nCols = data.shape
 
-    # To avoid 60 in seconds (provided by PRAIA occ),
-    date = []
-    for d in data[:, range(6)]:
-        if d[5] == '60.':
-            d[4] = int(d[4]) + 1
-            d[5] = '00.'
-        date.append(datetime.strptime(' '.join(d), "%d %m %Y %H %M %S."))
+        # To avoid 60 in seconds (provided by PRAIA occ),
+        date = []
+        for d in data[:, range(6)]:
+            if d[5] == '60.':
+                d[4] = int(d[4]) + 1
+                d[5] = '00.'
+            date.append(datetime.strptime(' '.join(d), "%d %m %Y %H %M %S."))
 
-    # use this definition when seconds = 0..59
-    # date = [datetime.strptime(' '.join(d), "%d %m %Y %H %M %S.") for d in data[:,range(6)]]
+        # use this definition when seconds = 0..59
+        # date = [datetime.strptime(' '.join(d), "%d %m %Y %H %M %S.") for d in data[:,range(6)]]
 
-    dateAndPositions = []
-    dateAndPositions.append(date)
+        dateAndPositions = []
+        dateAndPositions.append(date)
 
-    # Extracting positions of stars and objects and save it in a array
-    for i in range(6, 17, 3):
-        dateAndPositions.append(
-            get_position_from_occ_table(data, [i, i+1, i+2]))
+        # Extracting positions of stars and objects and save it in a array
+        for i in range(6, 17, 3):
+            dateAndPositions.append(
+                get_position_from_occ_table(data, [i, i+1, i+2]))
 
-    dateAndPositions = np.array(dateAndPositions)
-    dateAndPositions = dateAndPositions.T
+        dateAndPositions = np.array(dateAndPositions)
+        dateAndPositions = dateAndPositions.T
 
-    # Extracting others parameters (C/A, P/A, etc.)
-    otherParameters = data[:, range(18, nCols)]
+        # Extracting others parameters (C/A, P/A, etc.)
+        otherParameters = data[:, range(18, nCols)]
 
-    newData = np.concatenate((dateAndPositions, otherParameters), 1)
+        newData = np.concatenate((dateAndPositions, otherParameters), 1)
 
-    # Defining the column's names
-    colNames = "occultation_date;ra_star_candidate;dec_star_candidate;ra_object;" \
-        "dec_object;ca;pa;vel;delta;g;j;h;k;long;loc_t;" \
-        "off_ra;off_de;pm;ct;f;e_ra;e_de;pmra;pmde"
+        # Defining the column's names
+        colNames = "occultation_date;ra_star_candidate;dec_star_candidate;ra_object;" \
+            "dec_object;ca;pa;vel;delta;g;j;h;k;long;loc_t;" \
+            "off_ra;off_de;pm;ct;f;e_ra;e_de;pmra;pmde"
 
-    np.savetxt(outputFile, newData, fmt='%s', header=colNames, delimiter=';')
+        np.savetxt(outputFile, newData, fmt='%s',
+                   header=colNames, delimiter=';')
 
 
 def search_candidates(star_catalog, object_ephemeris, filename):

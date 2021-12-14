@@ -117,31 +117,7 @@ class GaiaDao(Dao):
 
             columns = ", ".join(self.gaia_properties)
 
-            # results = []
-
-            # # Agrupar clausulas em grupos para diminuir a quantidade de querys
-            # for gpos in dao.chunks_positions(positions, self.POSITION_GROUP):
-
-            #     clauses = list()
-
-            #     for pos in gpos:
-            #         clauses.append(self.q3c_clause(pos[0], pos[1], radius))
-
-            #     where = " OR ".join(clauses)
-            #     stm = """SELECT %s FROM %s WHERE %s """ % (
-            #         columns, tablename, where)
-
-            #     print(stm)
-
-            #     rows = self.fetch_all_dict(text(stm))
-            #     results += rows
-
-            #     del rows
-            #     del clauses
-
-            # return results
-
-            df_results = None
+            df_results = pd.DataFrame(columns=self.gaia_properties)
 
             # Agrupar clausulas em grupos para diminuir a quantidade de querys
             for gpos in self.chunks_positions(positions, self.POSITION_GROUP):

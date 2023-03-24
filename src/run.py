@@ -23,8 +23,8 @@ parser.add_argument("--step",
                     help="steps in seconds. Example 60", default=600)
 parser.add_argument("--leap_sec", default="naif0012.tls",
                     help="Name of the Leap Seconds file, it must be in the directory /data. example naif0012.tls")
-parser.add_argument("--bsp_planetary", default="de435.bsp",
-                    help="Name of the BSP Planetary file, it must be in the directory /data. example de435.bsp")
+parser.add_argument("--bsp_planetary", default="de440.bsp",
+                    help="Name of the BSP Planetary file, it must be in the directory /data. example de440.bsp")
 parser.add_argument("--bsp_object", default=None,
                     help="Name of the Asteroid BSP file, it must be in the directory /data. example Eris.bsp. default <name>.bsp")
 parser.add_argument("-p", "--path", default=None,

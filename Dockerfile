@@ -1,7 +1,5 @@
 FROM python:2.7.17
 
-MAINTAINER Glauber Costa Vila Verde <glauber.vila.verde@gmail.com>
-
 ENV APP_PATH=/app
 ENV DIR_DATA=/tmp/data
 
@@ -55,7 +53,7 @@ WORKDIR $APP_PATH
 # OBS. o Download demora bastante!
 RUN wget --no-verbose --show-progress \
 	--progress=bar:force:noscroll \ 
-	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp
+	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp	
 
 # Download Leap Second
 RUN wget --no-verbose --show-progress \
@@ -145,7 +143,7 @@ RUN groupadd --gid 10000 des-brazil
 RUN useradd --no-create-home --gid des-brazil --uid 1000 appuser
 
 # Adiciona o usuario Glauber porque quando o HTCondor roda está imagem é com o usuario que submeteu.
-RUN useradd --no-create-home --gid des-brazil --uid 10139 glauber.costa
+RUN useradd --no-create-home --gid des-brazil --uid 15161 glauber.costa
 
 # Dar permissão na pasta do NIMA
 RUN chown -R appuser:des-brazil $APP_PATH/NIMAv7 \

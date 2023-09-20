@@ -65,11 +65,11 @@ def start_praia_occ(
     # Limpa o diretório app e data removendo os links simbolicos e resultados
     # Util quando se roda varias vezes o mesmo job.
     clear_for_rerun(
-        input_files=[bsp_object_filename],
+        input_files=[bsp_object_filename, gaia_cat_filename],
         output_files=[
             dates_filename, eph_filename, radec_filename,
             positions_filename, centers_filename,
-            centers_deg_filename, gaia_cat_filename, gaia_csv_filename,
+            centers_deg_filename, gaia_csv_filename,
             search_input_filename, stars_catalog_mini_filename,
             stars_catalog_xy_filename, stars_parameters_of_occultation_filename,
             stars_parameters_of_occultation_plot_filename, occultation_table_filename,

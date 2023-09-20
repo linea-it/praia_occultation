@@ -1,0 +1,12 @@
+Leap Second: [naif0012.tls]
+BSP Planetary: [de440.bsp]
+BSP Object: [Chiron_nima.bsp]
+Dates File: [/tmp/data/dates.txt]
+Ephemeris File: [/tmp/data/Chiron.eph]
+Centers File: [/tmp/data/centers.txt]
+Gaia Cat: [/tmp/data/gaia_catalog.cat]
+Gaia CSV: [/tmp/data/gaia_catalog.csv]
+PRAIA OCC .DAT: [/tmp/data/praia_occ_star_search_12.dat]
+Terminou o praia occ
+PRAIA Occultation Table: [/tmp/data/g4_occ_data_JOHNSTON_2018_table]
+Occultation CSV Table: [/tmp/data/occultation_table.csv]

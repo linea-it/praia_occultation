@@ -49,17 +49,6 @@ RUN mkdir $APP_PATH \
 
 WORKDIR $APP_PATH
 
-# Download da BSP planetary
-# OBS. o Download demora bastante!
-RUN wget --no-verbose --show-progress \
-	--progress=bar:force:noscroll \ 
-	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp	
-
-# Download Leap Second
-RUN wget --no-verbose --show-progress \
-	--progress=bar:force:noscroll \
-	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
-
 # Instalação do PRAIA OCC
 COPY ./praia_occ_src $APP_PATH/praia_occ_src
 # Importante! Compilar o PRAIA OCC usando gfortran-7, 
@@ -133,17 +122,35 @@ RUN set -ex \
 # Copia os scripts de usuario para pasta NIMAv7_user
 COPY ./nima_src/user_scripts $APP_PATH/NIMAv7/NIMAv7_user/
 
+# Download da BSP planetary
+# OBS. o Download demora bastante!
+RUN wget --no-verbose --show-progress \
+	--progress=bar:force:noscroll \ 
+	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp	
+
+# Download Leap Second
+RUN wget --no-verbose --show-progress \
+	--progress=bar:force:noscroll \
+	https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
+
 # Copia os programas python para a pasta app
 COPY ./src $APP_PATH
 
+# # Criar o grupo des-brazil com o mesmo id usado no linea
+# RUN groupadd --gid 10000 des-brazil
+
+# # Adicionar o usuario appuser para rodar os jobs no condor
+# RUN useradd --no-create-home --gid des-brazil --uid 1000 appuser
+
+# # Adiciona o usuario Glauber porque quando o HTCondor roda está imagem é com o usuario que submeteu.
+# RUN useradd --no-create-home --gid des-brazil --uid 15161 glauber.costa
+
 # Criar o grupo des-brazil com o mesmo id usado no linea
-RUN groupadd --gid 10000 des-brazil
-
 # Adicionar o usuario appuser para rodar os jobs no condor
-RUN useradd --no-create-home --gid des-brazil --uid 1000 appuser
-
 # Adiciona o usuario Glauber porque quando o HTCondor roda está imagem é com o usuario que submeteu.
-RUN useradd --no-create-home --gid des-brazil --uid 15161 glauber.costa
+RUN groupadd --gid 10000 des-brazil \
+	&& useradd --no-create-home --gid des-brazil --uid 1000 appuser \
+	&& useradd --no-create-home --gid des-brazil --uid 15161 glauber.costa
 
 # Dar permissão na pasta do NIMA
 RUN chown -R appuser:des-brazil $APP_PATH/NIMAv7 \

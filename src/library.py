@@ -142,7 +142,7 @@ def read_asteroid_json(asteroid_name):
         return dict({})
 
 
-def write_asteroid_json(asteroid_name, data):
+def write_asteroid_json(asteroid_name, data, callback_path=None):
     import os
     import json
 
@@ -154,6 +154,11 @@ def write_asteroid_json(asteroid_name, data):
 
     with open(filepath, 'w') as json_file:
         json.dump(data, json_file)
+
+    if callback_path is not None:
+        filepath = os.path.join(callback_path, filename)
+        with open(filepath, 'w') as json_file:
+            json.dump(data, json_file)
 
 
 def count_lines(filepath):

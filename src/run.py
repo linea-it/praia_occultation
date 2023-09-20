@@ -30,7 +30,9 @@ parser.add_argument("--bsp_object", default=None,
 parser.add_argument("-p", "--path", default=None,
                     required=False,
                     help="Path where the inputs are and where the outputs will be. must be the path as it is mounted on the volume, should be used when it is not possible to mount the volume as /data. example the inputs are in /archive/asteroids/Eris and this path is mounted inside the container the parameter --path must have this value --path /archive/asteroids/Eris, the program will create a link from this path to /data.")
-
+parser.add_argument("-c", "--callback_path", default=None,
+                    required=False,
+                    help="Directory where a copy of asteroid.json will be placed at the end of execution. Useful for communicating the end of the task to other programs.")
 
 if __name__ == "__main__":
     t0 = datetime.now()
@@ -63,9 +65,16 @@ if __name__ == "__main__":
             raise Exception(
                 "No data directory was found. use the volume mounting the data in the /data directory or run the run.py script with parameter --path in which case the directory passed as parameter must be a mounted volume.")
 
+        if args.callback_path is not None and os.path.exists(args.callback_path) is False:
+            raise Exception(
+                "Callbacks directory not found. The directory passed as parameter must be a mounted volume.")            
+
         # Diretorio de Dados dentro do container.
         data_dir = os.environ.get("DIR_DATA").rstrip('/')
         print("DATA DIR: [%s]" % data_dir)
+
+        # Diretório de Callback
+        callback_path = args.callback_path
 
         # Tratar os Parametros de entrada
         name = args.name.replace(' ', '').replace('_', '')
@@ -186,7 +195,9 @@ if __name__ == "__main__":
         obj_data['predict_occultation'] = praia_result
 
         # Escreve os dados da execução no arquivo json do objeto.
-        write_asteroid_json(name, obj_data)
+        write_asteroid_json(name, obj_data, callback_path)
+
+        
 
     except Exception as e:
         print(e)
